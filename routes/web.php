@@ -13,5 +13,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('dashboard');
 });
 
+Route::get('/job-orders', function () {
+    return Inertia::render('job-order/index.tsx'); // or 'job-orders' depending on your file structure
+})->middleware('auth');
+
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
