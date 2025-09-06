@@ -11,6 +11,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', function () {
         return Inertia::render('dashboard');
     })->name('dashboard');
+
+    Route::get('/joborder', function () {
+    return Inertia::render('JobOrder');
+    })->name('joborder');
 });
 
 Route::get('/job-orders', function () {
