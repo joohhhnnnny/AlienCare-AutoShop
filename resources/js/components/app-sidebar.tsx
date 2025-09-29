@@ -2,25 +2,25 @@ import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
-import { dashboard, joborder } from '@/routes';
+import { dashboard, inventory } from '@/routes';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { BookOpen, ClipboardCheck, Folder, LayoutGrid } from 'lucide-react';
+import { BookOpen, Package, Folder, LayoutGrid } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
     {
         title: 'Dashboard',
-        href: dashboard(),
+        href: dashboard().url, // Use .url for Wayfinder functions
         icon: LayoutGrid,
     },
 ];
 
 const footerNavItems: NavItem[] = [
     {
-        title: 'Job Order',
-        href: joborder(),
-        icon: ClipboardCheck,
+        title: 'Inventory',
+        href: inventory(), // This is fine - it returns a string
+        icon: Package,
     },
     {
         title: 'Repository',
@@ -41,7 +41,7 @@ export function AppSidebar() {
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
-                            <Link href={dashboard()} prefetch>
+                            <Link href={dashboard().url} prefetch>
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>

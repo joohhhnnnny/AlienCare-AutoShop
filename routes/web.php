@@ -8,18 +8,14 @@ Route::get('/', function () {
 })->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('dashboard', function () {
+    Route::get('/dashboard', function () {
         return Inertia::render('dashboard');
     })->name('dashboard');
-
-    Route::get('/joborder', function () {
-    return Inertia::render('JobOrder');
-    })->name('joborder');
+    
+    Route::get('/inventory', function () {
+        return Inertia::render('Inventory');
+    })->name('inventory');
 });
-
-Route::get('/job-orders', function () {
-    return Inertia::render('job-order/index.tsx'); // or 'job-orders' depending on your file structure
-})->middleware('auth');
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
