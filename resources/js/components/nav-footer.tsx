@@ -1,4 +1,3 @@
-import { Icon } from '@/components/icon';
 import { SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
@@ -21,22 +20,26 @@ export function NavFooter({
 
                         return (
                             <SidebarMenuItem key={item.title}>
-                                <SidebarMenuButton
-                                    asChild
-                                    className="text-neutral-600 hover:text-neutral-800 dark:text-neutral-300 dark:hover:text-neutral-100"
-                                >
-                                    {isExternal ? (
-                                        <a href={href} target="_blank" rel="noopener noreferrer">
-                                            {item.icon && <Icon iconNode={item.icon} className="h-5 w-5" />}
-                                            <span>{item.title}</span>
+                                {isExternal ? (
+                                    <SidebarMenuButton asChild>
+                                        <a
+                                            href={href}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-sidebar-foreground hover:text-sidebar-accent"
+                                        >
+                                            <item.icon className="text-sidebar-foreground" />
+                                            <span className="text-sidebar-foreground">{item.title}</span>
                                         </a>
-                                    ) : (
-                                        <Link href={href} prefetch>
-                                            {item.icon && <Icon iconNode={item.icon} className="h-5 w-5" />}
-                                            <span>{item.title}</span>
+                                    </SidebarMenuButton>
+                                ) : (
+                                    <SidebarMenuButton asChild>
+                                        <Link href={href} className="text-sidebar-foreground hover:text-sidebar-accent">
+                                            <item.icon className="text-sidebar-foreground" />
+                                            <span className="text-sidebar-foreground">{item.title}</span>
                                         </Link>
-                                    )}
-                                </SidebarMenuButton>
+                                    </SidebarMenuButton>
+                                )}
                             </SidebarMenuItem>
                         );
                     })}
