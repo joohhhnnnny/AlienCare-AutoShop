@@ -1,99 +1,34 @@
-import { DollarSign, Download, FileText, Package, TrendingUp } from "lucide-react";
+import { AlertCircle, DollarSign, Download, FileText, Loader2, Package, TrendingUp } from "lucide-react";
 import { useState } from "react";
-import { mockParts, mockTransactions } from "../../data/inventory/mockData";
+import { useUsageReports } from "../../hooks/useUsageReports";
+import { Alert, AlertDescription } from "../ui/alert";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
 
-interface UsageReport {
-  partId: string;
-  partNumber: string;
-  description: string;
-  consumed: number;
-  reserved: number;
-  returned: number;
-  cost: number;
-}
-
 export function UsageReports() {
-  const [reportPeriod, setReportPeriod] = useState("daily");
+  const [reportPeriod, setReportPeriod] = useState<'daily' | 'weekly' | 'monthly'>("daily");
   const [selectedCategory, setSelectedCategory] = useState("all");
 
-  const categories = [...new Set(mockParts.map(part => part.category))];
-
-  // Generate usage report data
-  const generateUsageReport = (): UsageReport[] => {
-    const reportData: { [key: string]: UsageReport } = {};
-
-    mockTransactions.forEach(transaction => {
-      const part = mockParts.find(p => p.id === transaction.partId);
-      if (!part) return;
-
-      if (!reportData[part.id]) {
-        reportData[part.id] = {
-          partId: part.id,
-          partNumber: part.partNumber,
-          description: part.description,
-          consumed: 0,
-          reserved: 0,
-          returned: 0,
-          cost: 0
-        };
-      }
-
-      const quantity = Math.abs(transaction.quantity);
-      switch (transaction.type) {
-        case 'CONSUME':
-          reportData[part.id].consumed += quantity;
-          reportData[part.id].cost += quantity * part.unitCost;
-          break;
-        case 'RESERVE':
-          reportData[part.id].reserved += quantity;
-          break;
-        case 'RETURN':
-          reportData[part.id].returned += quantity;
-          break;
-      }
-    });
-
-    return Object.values(reportData).filter(report => {
-      if (selectedCategory === "all") return true;
-      const part = mockParts.find(p => p.id === report.partId);
-      return part?.category === selectedCategory;
-    });
-  };
-
-  const usageData = generateUsageReport();
-  const totalConsumed = usageData.reduce((sum, item) => sum + item.consumed, 0);
-  const totalCost = usageData.reduce((sum, item) => sum + item.cost, 0);
-  const mostUsedPart = usageData.reduce((max, item) =>
-    item.consumed > max.consumed ? item : max, usageData[0] || { consumed: 0, partNumber: 'N/A' }
-  );
-
-  // Category data for summary
-  const categoryData = categories.map(category => {
-    const categoryParts = mockParts.filter(part => part.category === category);
-    const consumed = usageData
-      .filter(usage => categoryParts.some(part => part.id === usage.partId))
-      .reduce((sum, usage) => sum + usage.consumed, 0);
-
-    return {
-      category,
-      consumed,
-      cost: usageData
-        .filter(usage => categoryParts.some(part => part.id === usage.partId))
-        .reduce((sum, usage) => sum + usage.cost, 0)
-    };
+  const { data, loading, error, refetch } = useUsageReports({
+    reportPeriod,
+    selectedCategory
   });
 
+  // Get unique categories from the data
+  const categories = data ?
+    [...new Set(data.category_breakdown.map(cat => cat.category))] :
+    [];
+
   const exportReport = () => {
-    // Mock export functionality
+    if (!data) return;
+
     const csvContent = [
-      'Part Number,Description,Consumed,Reserved,Returned,Cost',
-      ...usageData.map(item =>
-        `${item.partNumber},${item.description},${item.consumed},${item.reserved},${item.returned},${item.cost.toFixed(2)}`
+      'Part Number,Description,Consumed,Cost,Category,Unit Price,Transaction Count',
+      ...data.usage_by_item.map(item =>
+        `${item.part_number},"${item.description}",${item.consumed},${item.cost.toFixed(2)},${item.category},${item.unit_price},${item.transaction_count}`
       )
     ].join('\n');
 
@@ -101,10 +36,73 @@ export function UsageReports() {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `usage-report-${reportPeriod}.csv`;
+    a.download = `usage-report-${reportPeriod}-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Loader2 className="h-6 w-6 animate-spin" />
+          <span>Loading usage reports...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Usage Reports</h1>
+            <p className="text-muted-foreground">
+              Analyze parts consumption and cost tracking
+            </p>
+          </div>
+        </div>
+
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Failed to load usage reports: {error}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={refetch}
+              className="ml-4"
+            >
+              Try Again
+            </Button>
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Usage Reports</h1>
+            <p className="text-muted-foreground">
+              Analyze parts consumption and cost tracking
+            </p>
+          </div>
+        </div>
+
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            No usage data available for the selected period.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -112,11 +110,11 @@ export function UsageReports() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Usage Reports</h1>
           <p className="text-muted-foreground">
-            Analyze parts consumption and cost tracking
+            Analyze parts consumption and cost tracking ({data.date_range.start_date} to {data.date_range.end_date})
           </p>
         </div>
         <div className="flex gap-4">
-          <Select value={reportPeriod} onValueChange={setReportPeriod}>
+          <Select value={reportPeriod} onValueChange={(value: 'daily' | 'weekly' | 'monthly') => setReportPeriod(value)}>
             <SelectTrigger className="w-48 bg-input border-border text-foreground">
               <SelectValue />
             </SelectTrigger>
@@ -151,7 +149,7 @@ export function UsageReports() {
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-foreground">{totalConsumed}</div>
+            <div className="text-2xl font-bold text-foreground">{data.summary.total_consumed}</div>
             <p className="text-xs text-muted-foreground">
               {reportPeriod} period
             </p>
@@ -164,7 +162,7 @@ export function UsageReports() {
             <DollarSign className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-foreground">${totalCost.toFixed(2)}</div>
+            <div className="text-2xl font-bold text-foreground">${data.summary.total_cost.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">
               Parts consumption value
             </p>
@@ -177,9 +175,11 @@ export function UsageReports() {
             <TrendingUp className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-lg font-bold text-foreground">{mostUsedPart.partNumber}</div>
+            <div className="text-lg font-bold text-foreground">
+              {data.summary.most_used_item?.part_number || 'N/A'}
+            </div>
             <p className="text-xs text-muted-foreground">
-              {mostUsedPart.consumed} units consumed
+              {data.summary.most_used_item?.consumed || 0} units consumed
             </p>
           </CardContent>
         </Card>
@@ -190,7 +190,7 @@ export function UsageReports() {
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-foreground">{categoryData.filter(c => c.consumed > 0).length}</div>
+            <div className="text-2xl font-bold text-foreground">{data.summary.active_categories}</div>
             <p className="text-xs text-muted-foreground">
               Categories with usage
             </p>
@@ -210,14 +210,14 @@ export function UsageReports() {
                 <div className="relative">
                   <svg width="280" height="280" viewBox="0 0 280 280" className="transform -rotate-90">
                     {(() => {
-                      const filteredData = categoryData.filter(data => data.consumed > 0);
-                      const total = filteredData.reduce((sum, data) => sum + data.consumed, 0);
+                      const filteredData = data.category_breakdown.filter(cat => cat.consumed > 0);
+                      const total = filteredData.reduce((sum, cat) => sum + cat.consumed, 0);
                       let cumulativePercentage = 0;
                       // System color palette - golden, amber, orange, purple, red
                       const colors = ['#dfb400', '#f59e0b', '#f97316', '#a855f7', '#ef4444'];
 
-                      return filteredData.map((data, index) => {
-                        const percentage = (data.consumed / total) * 100;
+                      return filteredData.map((cat, index) => {
+                        const percentage = (cat.consumed / total) * 100;
                         const startAngle = (cumulativePercentage / 100) * 360;
                         const endAngle = ((cumulativePercentage + percentage) / 100) * 360;
 
@@ -242,7 +242,7 @@ export function UsageReports() {
 
                         return (
                           <path
-                            key={data.category}
+                            key={cat.category}
                             d={pathData}
                             fill={colors[index % colors.length]}
                             stroke="hsl(var(--background))"
@@ -260,7 +260,7 @@ export function UsageReports() {
                     <div className="text-center">
                       <div className="text-sm font-medium text-muted-foreground">Total</div>
                       <div className="text-lg font-bold text-foreground">
-                        {categoryData.filter(d => d.consumed > 0).reduce((sum, d) => sum + d.consumed, 0)}
+                        {data.category_breakdown.reduce((sum, cat) => sum + cat.consumed, 0)}
                       </div>
                       <div className="text-xs text-muted-foreground">units</div>
                     </div>
@@ -271,16 +271,16 @@ export function UsageReports() {
               {/* Legend */}
               <div className="flex-1 space-y-4">
                 <h4 className="font-semibold text-foreground mb-3">Category Breakdown</h4>
-                {categoryData
-                  .filter(data => data.consumed > 0)
+                {data.category_breakdown
+                  .filter(cat => cat.consumed > 0)
                   .sort((a, b) => b.consumed - a.consumed)
-                  .map((data, index) => {
-                    const total = categoryData.filter(d => d.consumed > 0).reduce((sum, d) => sum + d.consumed, 0);
-                    const percentage = ((data.consumed / total) * 100).toFixed(1);
+                  .map((cat, index) => {
+                    const total = data.category_breakdown.reduce((sum, c) => sum + c.consumed, 0);
+                    const percentage = total > 0 ? ((cat.consumed / total) * 100).toFixed(1) : '0.0';
                     const colors = ['#dfb400', '#f59e0b', '#f97316', '#a855f7', '#ef4444'];
 
                     return (
-                      <div key={data.category} className="group hover:bg-muted/50 p-3 rounded-lg transition-colors">
+                      <div key={cat.category} className="group hover:bg-muted/50 p-3 rounded-lg transition-colors">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-3">
                             <div
@@ -288,12 +288,12 @@ export function UsageReports() {
                               style={{ backgroundColor: colors[index % colors.length] }}
                             />
                             <div>
-                              <div className="font-medium text-foreground">{data.category}</div>
-                              <div className="text-sm text-muted-foreground">${data.cost.toFixed(2)} total cost</div>
+                              <div className="font-medium text-foreground">{cat.category}</div>
+                              <div className="text-sm text-muted-foreground">${cat.cost.toFixed(2)} total cost</div>
                             </div>
                           </div>
                           <div className="text-right">
-                            <div className="font-bold text-foreground">{data.consumed} units</div>
+                            <div className="font-bold text-foreground">{cat.consumed} units</div>
                             <div className="text-sm text-muted-foreground">{percentage}%</div>
                           </div>
                         </div>
@@ -314,17 +314,16 @@ export function UsageReports() {
               {/* Bar Chart */}
               <div className="relative mt-8">
                 <div className="flex items-end justify-between gap-4 h-72 p-6 bg-muted/20 rounded-lg">
-                  {usageData
-                    .sort((a, b) => b.consumed - a.consumed)
+                  {data.top_consumed_items
                     .slice(0, 5)
                     .map((item, index) => {
-                      const maxConsumed = Math.max(...usageData.slice(0, 5).map(d => d.consumed));
+                      const maxConsumed = Math.max(...data.top_consumed_items.slice(0, 5).map(d => d.consumed));
                       const barHeight = maxConsumed > 0 ? (item.consumed / maxConsumed) * 200 : 0;
                       // System color palette - golden, amber, orange, purple, red
                       const colors = ['#dfb400', '#f59e0b', '#f97316', '#a855f7', '#ef4444'];
 
                       return (
-                        <div key={item.partId} className="flex flex-col items-center flex-1 group">
+                        <div key={item.item_id} className="flex flex-col items-center flex-1 group">
                           {/* Value label above bar */}
                           <div className="mb-3 text-center">
                             <div className="font-bold text-foreground text-lg">{item.consumed}</div>
@@ -353,7 +352,7 @@ export function UsageReports() {
 
                           {/* Part info below bar */}
                           <div className="mt-4 text-center max-w-[90px]">
-                            <div className="font-semibold text-foreground text-sm truncate">{item.partNumber}</div>
+                            <div className="font-semibold text-foreground text-sm truncate">{item.part_number}</div>
                             <div className="text-xs text-muted-foreground font-medium mt-1">${item.cost.toFixed(2)}</div>
                           </div>
                         </div>
@@ -364,7 +363,7 @@ export function UsageReports() {
                 {/* Y-axis labels */}
                 <div className="absolute left-0 top-6 bottom-16 flex flex-col justify-between text-xs text-muted-foreground">
                   {Array.from({ length: 5 }, (_, i) => {
-                    const maxConsumed = Math.max(...usageData.slice(0, 5).map(d => d.consumed));
+                    const maxConsumed = Math.max(...data.top_consumed_items.slice(0, 5).map(d => d.consumed));
                     const value = Math.round((maxConsumed * (4 - i)) / 4);
                     return (
                       <div key={i} className="flex items-center">
@@ -379,13 +378,12 @@ export function UsageReports() {
               {/* Enhanced Legend */}
               <div className="space-y-3 pt-8 border-t border-border">
                 <h4 className="font-semibold text-foreground mb-4">Part Details</h4>
-                {usageData
-                  .sort((a, b) => b.consumed - a.consumed)
+                {data.top_consumed_items
                   .slice(0, 5)
                   .map((item, index) => {
                     const colors = ['#dfb400', '#f59e0b', '#f97316', '#a855f7', '#ef4444'];
                     return (
-                      <div key={`legend-${item.partId}`} className="group hover:bg-muted/30 p-3 rounded-lg transition-all duration-200">
+                      <div key={`legend-${item.item_id}`} className="group hover:bg-muted/30 p-3 rounded-lg transition-all duration-200">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-4">
                             <div
@@ -393,7 +391,7 @@ export function UsageReports() {
                               style={{ backgroundColor: colors[index % colors.length] }}
                             />
                             <div className="min-w-0 flex-1">
-                              <div className="font-semibold text-foreground">{item.partNumber}</div>
+                              <div className="font-semibold text-foreground">{item.part_number}</div>
                               <div className="text-sm text-muted-foreground truncate">
                                 {item.description}
                               </div>
@@ -424,26 +422,30 @@ export function UsageReports() {
                 <TableRow className="border-border">
                   <TableHead className="text-foreground">Part Number</TableHead>
                   <TableHead className="text-foreground">Description</TableHead>
+                  <TableHead className="text-foreground">Category</TableHead>
                   <TableHead className="text-foreground">Consumed</TableHead>
-                  <TableHead className="text-foreground">Reserved</TableHead>
-                  <TableHead className="text-foreground">Returned</TableHead>
                   <TableHead className="text-foreground">Total Cost</TableHead>
+                  <TableHead className="text-foreground">Unit Price</TableHead>
+                  <TableHead className="text-foreground">Transactions</TableHead>
                   <TableHead className="text-foreground">Usage Intensity</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {usageData
+                {data.usage_by_item
                   .sort((a, b) => b.consumed - a.consumed)
                   .map((item) => {
                     const usageIntensity = item.consumed > 10 ? 'HIGH' : item.consumed > 5 ? 'MEDIUM' : 'LOW';
                     return (
-                      <TableRow key={item.partId} className="border-border hover:bg-muted/50">
-                        <TableCell className="font-medium text-foreground">{item.partNumber}</TableCell>
-                        <TableCell className="text-foreground">{item.description}</TableCell>
+                      <TableRow key={item.item_id} className="border-border hover:bg-muted/50">
+                        <TableCell className="font-medium text-foreground">{item.part_number}</TableCell>
+                        <TableCell className="text-foreground max-w-[200px] truncate" title={item.description}>
+                          {item.description}
+                        </TableCell>
+                        <TableCell className="text-foreground">{item.category}</TableCell>
                         <TableCell className="text-foreground">{item.consumed}</TableCell>
-                        <TableCell className="text-foreground">{item.reserved}</TableCell>
-                        <TableCell className="text-foreground">{item.returned}</TableCell>
                         <TableCell className="text-foreground">${item.cost.toFixed(2)}</TableCell>
+                        <TableCell className="text-foreground">${item.unit_price}</TableCell>
+                        <TableCell className="text-foreground">{item.transaction_count}</TableCell>
                         <TableCell>
                           <Badge variant={
                             usageIntensity === 'HIGH' ? 'destructive' :
@@ -458,7 +460,7 @@ export function UsageReports() {
               </TableBody>
             </Table>
           </div>
-          {usageData.length === 0 && (
+          {data.usage_by_item.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
               No usage data found for the selected period and category
             </div>

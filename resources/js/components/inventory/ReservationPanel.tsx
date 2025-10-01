@@ -57,15 +57,15 @@ export function ReservationPanel() {
     }
 
     const reservation: Reservation = {
-      id: `r${Date.now()}`,
-      partId: newReservation.partId,
-      jobOrderId: newReservation.jobOrderId,
-      quantityReserved: parseInt(newReservation.quantity),
-      quantityConsumed: 0,
-      status: 'ACTIVE',
-      requestedBy: newReservation.requestedBy,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      id: Date.now(),
+      item_id: newReservation.partId,
+      job_order_number: newReservation.jobOrderId,
+      quantity: parseInt(newReservation.quantity),
+      actual_quantity: 0,
+      status: 'pending',
+      requested_by: newReservation.requestedBy,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
 
     setReservations(prev => [...prev, reservation]);
@@ -73,19 +73,19 @@ export function ReservationPanel() {
     setIsDialogOpen(false);
   };
 
-  const updateReservationStatus = (reservationId: string, newStatus: string) => {
+  const updateReservationStatus = (reservationId: number, newStatus: string) => {
     setReservations(prev => prev.map(reservation =>
       reservation.id === reservationId
-        ? { ...reservation, status: newStatus as any, updatedAt: new Date() }
+        ? { ...reservation, status: newStatus as any, updated_at: new Date().toISOString() }
         : reservation
     ));
   };
 
-  const activeReservations = reservations.filter(r => r.status === 'ACTIVE' || r.status === 'PARTIAL');
-  const completedReservations = reservations.filter(r => r.status === 'COMPLETED');
+  const activeReservations = reservations.filter(r => r.status === 'pending' || r.status === 'approved');
+  const completedReservations = reservations.filter(r => r.status === 'completed');
   const totalReservedValue = activeReservations.reduce((sum, reservation) => {
-    const part = mockParts.find(p => p.id === reservation.partId);
-    return sum + (part ? part.unitCost * reservation.quantityReserved : 0);
+    const part = mockParts.find(p => p.id === reservation.item_id);
+    return sum + (part ? part.unitCost * reservation.quantity : 0);
   }, 0);
 
   return (
@@ -201,7 +201,7 @@ export function ReservationPanel() {
           <CardContent>
             <div className="text-2xl font-bold text-primary">
               {completedReservations.filter(r =>
-                r.updatedAt.toDateString() === new Date().toDateString()
+                new Date(r.updated_at).toDateString() === new Date().toDateString()
               ).length}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -233,36 +233,36 @@ export function ReservationPanel() {
               </TableHeader>
               <TableBody>
                 {reservations.map((reservation) => {
-                  const part = mockParts.find(p => p.id === reservation.partId);
+                  const part = mockParts.find(p => p.id === reservation.item_id);
                   return (
                     <TableRow key={reservation.id} className="border-border hover:bg-muted/50">
-                      <TableCell className="font-medium text-foreground">{reservation.jobOrderId}</TableCell>
+                      <TableCell className="font-medium text-foreground">{reservation.job_order_number}</TableCell>
                       <TableCell className="text-foreground">{part?.partNumber}</TableCell>
                       <TableCell className="text-foreground">{part?.description}</TableCell>
-                      <TableCell className="text-foreground">{reservation.quantityReserved}</TableCell>
-                      <TableCell className="text-foreground">{reservation.quantityConsumed}</TableCell>
+                      <TableCell className="text-foreground">{reservation.quantity}</TableCell>
+                      <TableCell className="text-foreground">{reservation.actual_quantity || 0}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           {getStatusIcon(reservation.status)}
                           {getStatusBadge(reservation.status)}
                         </div>
                       </TableCell>
-                      <TableCell className="text-foreground">{reservation.requestedBy}</TableCell>
-                      <TableCell className="text-foreground">{reservation.createdAt.toLocaleDateString()}</TableCell>
+                      <TableCell className="text-foreground">{reservation.requested_by}</TableCell>
+                      <TableCell className="text-foreground">{new Date(reservation.created_at).toLocaleDateString()}</TableCell>
                       <TableCell>
-                        {reservation.status === 'ACTIVE' && (
+                        {reservation.status === 'pending' && (
                           <div className="flex gap-2">
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => updateReservationStatus(reservation.id, 'COMPLETED')}
+                              onClick={() => updateReservationStatus(reservation.id, 'completed')}
                             >
                               Complete
                             </Button>
                             <Button
                               size="sm"
                               variant="destructive"
-                              onClick={() => updateReservationStatus(reservation.id, 'CANCELLED')}
+                              onClick={() => updateReservationStatus(reservation.id, 'cancelled')}
                             >
                               Cancel
                             </Button>

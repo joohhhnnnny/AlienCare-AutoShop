@@ -8,21 +8,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 export function StockAlerts() {
   const [alerts, setAlerts] = useState(mockAlerts);
 
-  const acknowledgeAlert = (alertId: string) => {
+  const acknowledgeAlert = (alertId: number) => {
     setAlerts(prev => prev.map(alert =>
       alert.id === alertId
-        ? { ...alert, acknowledged: true, acknowledgedBy: 'Current User' }
+        ? { ...alert, acknowledged: true, acknowledged_by: 'Current User' }
         : alert
     ));
   };
 
   const getUrgencyIcon = (urgency: string) => {
     switch (urgency) {
-      case 'CRITICAL':
+      case 'critical':
         return <AlertTriangle className="h-4 w-4 text-destructive" />;
-      case 'HIGH':
+      case 'high':
         return <AlertTriangle className="h-4 w-4 text-primary" />;
-      case 'MEDIUM':
+      case 'medium':
         return <Clock className="h-4 w-4 text-primary/80" />;
       default:
         return <Package className="h-4 w-4 text-primary/60" />;
@@ -31,11 +31,11 @@ export function StockAlerts() {
 
   const getUrgencyBadge = (urgency: string) => {
     switch (urgency) {
-      case 'CRITICAL':
+      case 'critical':
         return <Badge variant="destructive">Critical</Badge>;
-      case 'HIGH':
+      case 'high':
         return <Badge className="bg-primary text-primary-foreground">High</Badge>;
-      case 'MEDIUM':
+      case 'medium':
         return <Badge className="bg-primary/80 text-primary-foreground">Medium</Badge>;
       default:
         return <Badge variant="secondary">Low</Badge>;
@@ -62,7 +62,7 @@ export function StockAlerts() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-destructive">
-              {unacknowledgedAlerts.filter(a => a.urgency === 'CRITICAL').length}
+              {unacknowledgedAlerts.filter(a => a.urgency === 'critical').length}
             </div>
             <p className="text-xs text-muted-foreground">
               Immediate attention required
@@ -77,7 +77,7 @@ export function StockAlerts() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-primary">
-              {unacknowledgedAlerts.filter(a => a.urgency === 'HIGH').length}
+              {unacknowledgedAlerts.filter(a => a.urgency === 'high').length}
             </div>
             <p className="text-xs text-muted-foreground">
               Action needed soon
@@ -110,7 +110,7 @@ export function StockAlerts() {
           <CardContent className="space-y-4">
             {unacknowledgedAlerts.length > 0 ? (
               unacknowledgedAlerts.map(alert => {
-                const part = mockParts.find(p => p.id === alert.partId);
+                const part = mockParts.find(p => p.id === alert.item_id);
                 return (
                   <div key={alert.id} className="border border-border rounded-lg p-4 space-y-3 bg-card">
                     <div className="flex items-center justify-between">
@@ -125,20 +125,20 @@ export function StockAlerts() {
                     </div>
 
                     <div className="flex justify-between text-sm text-muted-foreground">
-                      <span>Current Stock: {alert.currentStock}</span>
-                      <span>Threshold: {alert.threshold}</span>
+                      <span>Current Stock: {alert.current_stock}</span>
+                      <span>Threshold: {alert.reorder_level}</span>
                     </div>
 
                     <div className="w-full bg-muted rounded-full h-2">
                       <div
                         className="h-2 rounded-full bg-destructive"
-                        style={{ width: `${Math.min((alert.currentStock / alert.threshold) * 100, 100)}%` }}
+                        style={{ width: `${Math.min((alert.current_stock / alert.reorder_level) * 100, 100)}%` }}
                       />
                     </div>
 
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-muted-foreground">
-                        Created: {alert.createdAt.toLocaleDateString()}
+                        Created: {new Date(alert.created_at).toLocaleDateString()}
                       </span>
                       <Button
                         size="sm"
@@ -170,7 +170,7 @@ export function StockAlerts() {
           <CardContent className="space-y-4">
             {acknowledgedAlerts.length > 0 ? (
               acknowledgedAlerts.map(alert => {
-                const part = mockParts.find(p => p.id === alert.partId);
+                const part = mockParts.find(p => p.id === alert.item_id);
                 return (
                   <div key={alert.id} className="border border-border rounded-lg p-4 space-y-3 opacity-75 bg-card">
                     <div className="flex items-center justify-between">
@@ -185,8 +185,8 @@ export function StockAlerts() {
                     </div>
 
                     <div className="flex justify-between text-sm text-muted-foreground">
-                      <span>Stock: {alert.currentStock}</span>
-                      <span>By: {alert.acknowledgedBy}</span>
+                      <span>Stock: {alert.current_stock}</span>
+                      <span>By: {alert.acknowledged_by}</span>
                     </div>
                   </div>
                 );
