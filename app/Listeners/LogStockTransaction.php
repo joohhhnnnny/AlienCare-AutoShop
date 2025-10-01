@@ -39,7 +39,7 @@ class LogStockTransaction implements ShouldQueue
                     'item_name' => $event->inventory->item_name,
                     'category' => $event->inventory->category
                 ],
-                'user_id' => auth()->id() ?? null,
+                'user_id' => null, // Will be set by system events
                 'notes' => "Stock {$event->action} operation",
                 'archived_date' => $event->timestamp
             ]);
