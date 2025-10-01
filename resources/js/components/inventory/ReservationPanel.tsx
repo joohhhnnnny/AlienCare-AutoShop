@@ -474,7 +474,7 @@ export function ReservationPanel() {
 
                   <div className="space-y-3 max-h-64 overflow-y-auto">
                     {reservationItems.map((item, index) => (
-                      <div key={index} className="flex gap-2 items-end p-3 border rounded-lg bg-muted/20">
+                      <div key={`reservation-item-${index}-${item.item_id || 'empty'}`} className="flex gap-2 items-end p-3 border rounded-lg bg-muted/20">
                         <div className="flex-1">
                           <Label className="text-xs text-muted-foreground">Part</Label>
                           <Select
@@ -779,7 +779,7 @@ export function ReservationPanel() {
                                   <TableCell className="px-4 py-3">
                                     <div className="flex items-center justify-center gap-2 min-h-[36px]">
                                       {reservation.status === 'pending' && (
-                                        <>
+                                        <div className="flex gap-2">
                                           <Button
                                             size="sm"
                                             className="h-8 px-3 text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90"
@@ -805,10 +805,10 @@ export function ReservationPanel() {
                                               'Reject'
                                             )}
                                           </Button>
-                                        </>
+                                        </div>
                                       )}
                                       {reservation.status === 'approved' && (
-                                        <>
+                                        <div className="flex gap-2">
                                           <Button
                                             size="sm"
                                             variant="outline"
@@ -835,7 +835,7 @@ export function ReservationPanel() {
                                               'Cancel'
                                             )}
                                           </Button>
-                                        </>
+                                        </div>
                                       )}
                                       {(reservation.status === 'completed' || reservation.status === 'cancelled' || reservation.status === 'rejected') && (
                                         <span className="text-xs text-muted-foreground px-3">
