@@ -61,6 +61,31 @@ class HandleLowStockAlert implements ShouldQueue
                 'alert_level' => $event->alertLevel
             ]);
 
+            // Create Alert record in database
+            $urgency = $event->alertLevel === 'critical' ? 'critical' : 'high';
+            $alertType = $inventory->stock == 0 ? 'out_of_stock' : 'low_stock';
+
+            $message = $urgency === 'critical'
+                ? "CRITICAL: {$inventory->item_name} is out of stock! Immediate restocking required."
+                : "HIGH PRIORITY: {$inventory->item_name} stock is critically low ({$inventory->stock} units remaining).";
+
+            \App\Models\Alert::firstOrCreate(
+                [
+                    'item_id' => $inventory->item_id,
+                    'alert_type' => $alertType,
+                    'acknowledged' => false
+                ],
+                [
+                    'item_name' => $inventory->item_name,
+                    'current_stock' => $inventory->stock,
+                    'reorder_level' => $inventory->reorder_level,
+                    'category' => $inventory->category,
+                    'supplier' => $inventory->supplier,
+                    'urgency' => $urgency,
+                    'message' => $message,
+                ]
+            );
+
             // Here you could send notifications to managers, procurement team, etc.
             // For example:
             // $users = User::where('role', 'inventory_manager')->get();

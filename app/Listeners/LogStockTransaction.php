@@ -50,6 +50,12 @@ class LogStockTransaction implements ShouldQueue
                 'timestamp' => $event->timestamp
             ]);
 
+            // Check for low stock and fire alert if needed
+            if ($event->inventory->isLowStock()) {
+                Log::info("Low stock detected for {$event->inventory->item_id}, firing alert event");
+                event(new \App\Events\LowStockAlert($event->inventory));
+            }
+
         } catch (\Exception $e) {
             Log::error("Failed to log stock transaction: " . $e->getMessage(), [
                 'inventory_id' => $event->inventory->inventory_id,

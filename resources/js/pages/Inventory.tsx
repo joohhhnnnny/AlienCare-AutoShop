@@ -6,7 +6,7 @@ import { StockAlerts } from '@/components/inventory/StockAlerts';
 import { UsageReports } from '@/components/inventory/UsageReports';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { mockAlerts } from '@/data/inventory/mockData';
+import { useAlerts } from '@/hooks/useAlerts';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
@@ -24,7 +24,11 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function Inventory() {
-    const unacknowledgedAlerts = mockAlerts.filter(alert => !alert.acknowledged).length;
+    const { alerts, loading } = useAlerts();
+
+    // Ensure alerts is always an array and calculate unacknowledged count
+    const safeAlerts = Array.isArray(alerts) ? alerts : [];
+    const unacknowledgedAlerts = safeAlerts.filter(alert => !alert.acknowledged).length;
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>

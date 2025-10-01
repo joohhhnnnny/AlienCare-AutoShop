@@ -6,6 +6,7 @@
 import { ApiResponse, PaginatedResponse } from '@/lib/api';
 import { InventoryFilters, inventoryService, NewInventoryItem, StockOperation } from '@/services/inventoryService';
 import { DashboardAnalytics, InventoryItem, StockTransaction } from '@/types/inventory';
+import { dispatchInventoryUpdate, dispatchStockTransaction } from '@/utils/inventoryEvents';
 import { useCallback, useEffect, useState } from 'react';
 
 // Hook for inventory items with pagination and filtering
@@ -39,8 +40,15 @@ export function useInventoryItems(initialFilters: InventoryFilters = {}) {
 
     const addStock = useCallback(async (operation: StockOperation) => {
         try {
-            await inventoryService.addStock(operation);
+            const response = await inventoryService.addStock(operation);
             await fetchInventory(); // Refresh data
+
+            // Dispatch event for real-time updates
+            dispatchStockTransaction(operation.item_id, 'procurement', operation.quantity, {
+                reference_number: operation.reference_number,
+                notes: operation.notes
+            });
+
             return true;
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to add stock');
@@ -50,8 +58,15 @@ export function useInventoryItems(initialFilters: InventoryFilters = {}) {
 
     const deductStock = useCallback(async (operation: StockOperation) => {
         try {
-            await inventoryService.deductStock(operation);
+            const response = await inventoryService.deductStock(operation);
             await fetchInventory(); // Refresh data
+
+            // Dispatch event for real-time updates
+            dispatchStockTransaction(operation.item_id, 'sale', -operation.quantity, {
+                reference_number: operation.reference_number,
+                notes: operation.notes
+            });
+
             return true;
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to deduct stock');
@@ -61,8 +76,16 @@ export function useInventoryItems(initialFilters: InventoryFilters = {}) {
 
     const createItem = useCallback(async (item: NewInventoryItem) => {
         try {
-            await inventoryService.createInventoryItem(item);
+            const response = await inventoryService.createInventoryItem(item);
             await fetchInventory(); // Refresh data
+
+            // Dispatch event for real-time updates
+            dispatchInventoryUpdate(item.item_id, 'created', {
+                item_name: item.item_name,
+                category: item.category,
+                stock: item.stock
+            });
+
             return true;
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to create item');
@@ -206,7 +229,7 @@ export function useStockTransactions(filters: {
             setLoading(true);
             setError(null);
             const response = await inventoryService.getStockTransactions(filters);
-            setData(response);
+            setData(response.data);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to fetch transactions');
             console.error('Error fetching transactions:', err);

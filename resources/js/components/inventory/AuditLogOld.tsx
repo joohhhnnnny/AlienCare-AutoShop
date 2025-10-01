@@ -1,5 +1,5 @@
 import { Activity, Clock, RefreshCw, Search, Shield, User } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useAuditLog } from "../../hooks/useAuditLog";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
@@ -13,7 +13,7 @@ export function AuditLog() {
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [userFilter, setUserFilter] = useState<string>("all");
 
-  // Use the audit log hook for backend data with real-time enabled
+  // Use the audit log hook for backend data
   const {
     transactions,
     stats,
@@ -21,17 +21,9 @@ export function AuditLog() {
     error,
     refreshing,
     refresh,
-    setAutoRefresh,
-    isRealTime,
-    lastUpdated
   } = useAuditLog({
     per_page: 100 // Get more records for better filtering
   });
-
-  // Automatically enable real-time mode on component mount
-  useEffect(() => {
-    setAutoRefresh(true);
-  }, [setAutoRefresh]);
 
   // Apply local filters to transactions
   const filteredTransactions = transactions.filter(transaction => {
@@ -47,8 +39,6 @@ export function AuditLog() {
 
   // Get available filter options from real data
   const transactionTypes = [...new Set(transactions.map(t => t.type))];
-  const users = [...new Set(transactions.map(t => t.performed_by || 'System'))];
-
   const getTransactionBadge = (type: string) => {
     switch (type) {
       case 'CONSUME':
@@ -97,19 +87,8 @@ export function AuditLog() {
           <p className="text-muted-foreground">
             Complete record of all inventory transactions and changes
           </p>
-          <div className="flex items-center gap-2 mt-2">
-            <div className={`w-2 h-2 rounded-full ${isRealTime ? 'bg-green-500' : 'bg-gray-400'}`}></div>
-            <span className="text-sm text-muted-foreground">
-              {isRealTime ? 'Live Updates Active' : 'Real-time Disabled'}
-            </span>
-            {lastUpdated && (
-              <span className="text-xs text-muted-foreground">
-                • Last updated: {lastUpdated.toLocaleTimeString()}
-              </span>
-            )}
-          </div>
         </div>
-
+        
         <Button
           onClick={refresh}
           disabled={refreshing}
@@ -179,9 +158,7 @@ export function AuditLog() {
             </p>
           </CardContent>
         </Card>
-      </div>
-
-      <Card className="bg-card border-border">
+      </div>      <Card className="bg-card border-border">
         <CardHeader>
           <CardTitle className="text-foreground">Transaction Filters</CardTitle>
           <div className="flex flex-col sm:flex-row gap-4">
@@ -243,19 +220,14 @@ export function AuditLog() {
                   <TableBody>
                     {filteredTransactions
                       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-                      .map((transaction, index) => {
-                        // Create a unique key using multiple fields to avoid duplicates
-                        const uniqueKey = transaction.id
-                          ? transaction.id
-                          : `${transaction.timestamp}-${transaction.type}-${transaction.item_id}-${transaction.quantity}-${index}`;
-
+                      .map((transaction) => {
                         return (
-                          <TableRow key={uniqueKey} className="border-border hover:bg-muted/50">
+                          <TableRow key={transaction.id} className="border-border hover:bg-muted/50">
                             <TableCell className="font-mono text-sm text-foreground">
                               {new Date(transaction.timestamp).toLocaleString()}
                             </TableCell>
                             <TableCell className="font-mono text-sm text-foreground">
-                              {transaction.id || 'N/A'}
+                              {transaction.id}
                             </TableCell>
                             <TableCell>{getTransactionBadge(transaction.type)}</TableCell>
                             <TableCell className="font-medium text-foreground">

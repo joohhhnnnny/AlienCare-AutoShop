@@ -3,8 +3,8 @@
  * Handles all HTTP requests to the Laravel backend
  */
 
-// API Base URL - automatically detects from current domain
-const API_BASE_URL = window.location.origin + '/api';
+// API Base URL - use the Laravel backend URL
+const API_BASE_URL = 'http://localhost:8000/api';
 
 // API Response Types
 export interface ApiResponse<T> {

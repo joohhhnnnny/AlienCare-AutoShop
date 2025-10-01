@@ -114,3 +114,67 @@ export interface UsageReport {
   averagePerJob: number;
   period: string;
 }
+
+// Audit Log types for real-time tracking
+export interface AuditLog {
+  archive_id: number;
+  entity_type: 'inventory' | 'reservation' | 'transaction';
+  entity_id: string | number;
+  action: 'create' | 'update' | 'delete' | 'reserve' | 'approve' | 'reject' | 'complete' | 'cancel' | 'consume' | 'restock' | 'adjust';
+  old_data?: any;
+  new_data?: any;
+  user_id?: string;
+  reference_number?: string;
+  notes?: string;
+  archived_date: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Enhanced transaction type with audit information
+export interface AuditTransaction {
+  id: string | number; // Allow both string and number for compatibility
+  item_id: string;
+  transaction_type: 'procurement' | 'sale' | 'return' | 'damage' | 'adjustment';
+  quantity: number;
+  balance_after: number;
+  reference_number?: string;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+  // Audit-specific fields
+  performed_by?: string;
+  job_order_id?: string;
+  reason?: string;
+  timestamp: string;
+  type: string; // Maps to transaction_type for display
+  partId: string;
+  // Optional inventory relationship
+  inventory_item?: InventoryItem;
+}
+
+// Audit log filters
+export interface AuditLogFilters {
+  search?: string;
+  entity_type?: 'inventory' | 'reservation' | 'transaction' | 'all';
+  action?: string;
+  user_id?: string;
+  start_date?: string;
+  end_date?: string;
+  per_page?: number;
+  page?: number;
+}
+
+// Audit statistics for dashboard
+export interface AuditStats {
+  total_transactions: number;
+  today_transactions: number;
+  week_transactions: number;
+  month_transactions: number;
+  unique_users: number;
+  transaction_types: {
+    type: string;
+    count: number;
+  }[];
+  users: string[];
+}
