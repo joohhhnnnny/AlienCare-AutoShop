@@ -1,11 +1,12 @@
-import { AlertTriangle, CheckCircle, Clock, Package, Plus, RefreshCw, Trash2, XCircle } from "lucide-react";
-import { useState } from "react";
+import { AlertTriangle, CheckCircle, ChevronDown, ChevronRight, Clock, Package, Plus, RefreshCw, Trash2, XCircle } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useInventoryItems } from "../../hooks/useInventory";
 import { useReservations } from "../../hooks/useReservations";
 import { Reservation } from "../../types/inventory";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
@@ -32,6 +33,13 @@ export function ReservationPanel() {
   // Local state for UI
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({
+    pending: false, // Always start expanded for highest priority
+    approved: false, // Keep expanded for active work
+    completed: true, // Start collapsed - historical data
+    cancelled: true, // Start collapsed - archived data
+    rejected: true   // Start collapsed - archived data
+  });
   const [reservationItems, setReservationItems] = useState<Array<{ item_id: string; quantity: number | string }>>([
     { item_id: '', quantity: 1 }
   ]);
@@ -77,6 +85,115 @@ export function ReservationPanel() {
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
+  };
+
+  // Group reservations by status with hierarchy - pending gets top priority
+  const groupReservationsByStatus = (reservations: Reservation[]) => {
+    // Priority order: pending first (highest priority), then approved, then others
+    const statusOrder = ['pending', 'approved', 'completed', 'cancelled', 'rejected'];
+    const grouped = reservations.reduce((acc, reservation) => {
+      const status = reservation.status;
+      if (!acc[status]) {
+        acc[status] = [];
+      }
+      acc[status].push(reservation);
+      return acc;
+    }, {} as Record<string, Reservation[]>);
+
+    // Sort within each group: pending by urgency (oldest first), others by newest first
+    statusOrder.forEach(status => {
+      if (grouped[status]) {
+        if (status === 'pending') {
+          // For pending reservations, sort oldest first (most urgent)
+          grouped[status].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+        } else {
+          // For other statuses, sort newest first
+          grouped[status].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        }
+      }
+    });
+
+    // Return as ordered array instead of object to maintain priority order
+    return statusOrder
+      .filter(status => grouped[status] && grouped[status].length > 0)
+      .map(status => [status, grouped[status]] as [string, Reservation[]]);
+  };
+
+  // Get status group styling with enhanced pending priority
+  const getStatusGroupStyle = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return {
+          headerBg: 'bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-300 dark:from-yellow-950/30 dark:to-orange-950/30 dark:border-yellow-700',
+          textColor: 'text-yellow-900 dark:text-yellow-100',
+          icon: 'text-yellow-700 dark:text-yellow-300',
+          priority: 'HIGH PRIORITY'
+        };
+      case 'approved':
+        return {
+          headerBg: 'bg-blue-50 border-blue-200 dark:bg-blue-950/20 dark:border-blue-800',
+          textColor: 'text-blue-800 dark:text-blue-200',
+          icon: 'text-blue-600',
+          priority: 'ACTIVE'
+        };
+      case 'completed':
+        return {
+          headerBg: 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800',
+          textColor: 'text-green-800 dark:text-green-200',
+          icon: 'text-green-600',
+          priority: 'COMPLETED'
+        };
+      case 'cancelled':
+      case 'rejected':
+        return {
+          headerBg: 'bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-800',
+          textColor: 'text-red-800 dark:text-red-200',
+          icon: 'text-red-600',
+          priority: 'ARCHIVED'
+        };
+      default:
+        return {
+          headerBg: 'bg-gray-50 border-gray-200 dark:bg-gray-950/20 dark:border-gray-800',
+          textColor: 'text-gray-800 dark:text-gray-200',
+          icon: 'text-gray-600',
+          priority: 'OTHER'
+        };
+    }
+  };
+
+  // Toggle group collapse state with special handling for pending
+  const toggleGroupCollapse = (status: string) => {
+    setCollapsedGroups(prev => ({
+      ...prev,
+      [status]: !prev[status]
+    }));
+  };
+
+  // Auto-expand pending reservations if they exist
+  const checkAndExpandPendingReservations = () => {
+    const pendingReservations = reservations.filter(r => r.status === 'pending');
+    if (pendingReservations.length > 0 && collapsedGroups.pending) {
+      setCollapsedGroups(prev => ({
+        ...prev,
+        pending: false // Ensure pending is always visible when they exist
+      }));
+    }
+  };
+
+  // Check for pending reservations when data changes
+  useEffect(() => {
+    checkAndExpandPendingReservations();
+  }, [reservations]);
+
+  // Get group statistics
+  const getGroupStats = (reservations: Reservation[]) => {
+    const totalQuantity = reservations.reduce((sum, r) => sum + r.quantity, 0);
+    const totalValue = reservations.reduce((sum, r) => {
+      const item = inventoryItems.find(item => item.item_id === r.item_id);
+      const unitPrice = typeof item?.unit_price === 'string' ? parseFloat(item.unit_price) : (item?.unit_price || 0);
+      return sum + (r.quantity * unitPrice);
+    }, 0);
+    return { totalQuantity, totalValue };
   };
 
     const resetReservationForm = () => {
@@ -452,6 +569,37 @@ export function ReservationPanel() {
         </Dialog>
       </div>
 
+      {/* Priority Alert for Pending Reservations */}
+      {reservations.filter(r => r.status === 'pending').length > 0 && (
+        <Card className="bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-300 dark:from-yellow-950/30 dark:to-orange-950/30 dark:border-yellow-700">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-orange-600 animate-pulse" />
+                  <div>
+                    <h3 className="font-semibold text-orange-900 dark:text-orange-100">
+                      Urgent: Reservations Awaiting Approval
+                    </h3>
+                    <p className="text-sm text-orange-700 dark:text-orange-300">
+                      {reservations.filter(r => r.status === 'pending').length} reservation{reservations.filter(r => r.status === 'pending').length !== 1 ? 's' : ''} need{reservations.filter(r => r.status === 'pending').length === 1 ? 's' : ''} immediate attention
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-sm font-medium text-orange-900 dark:text-orange-100">
+                  {reservations.filter(r => r.status === 'pending').reduce((sum, r) => sum + r.quantity, 0)} items pending
+                </div>
+                <div className="text-xs text-orange-700 dark:text-orange-300">
+                  Review and approve below
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="bg-card border-border">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -502,137 +650,220 @@ export function ReservationPanel() {
           <CardTitle className="text-foreground">Reservation Details</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border border-border overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow className="border-border bg-muted/50">
-                  <TableHead className="text-foreground font-semibold w-[120px]">Job Order</TableHead>
-                  <TableHead className="text-foreground font-semibold w-[130px]">Part Number</TableHead>
-                  <TableHead className="text-foreground font-semibold min-w-[200px]">Description</TableHead>
-                  <TableHead className="text-foreground font-semibold w-[80px] text-center">Reserved</TableHead>
-                  <TableHead className="text-foreground font-semibold w-[80px] text-center">Consumed</TableHead>
-                  <TableHead className="text-foreground font-semibold w-[100px] text-center">Status</TableHead>
-                  <TableHead className="text-foreground font-semibold w-[120px]">Requested By</TableHead>
-                  <TableHead className="text-foreground font-semibold w-[100px] text-center">Created</TableHead>
-                  <TableHead className="text-foreground font-semibold w-[180px] text-center">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {reservations.map((reservation: Reservation) => {
-                  const item = inventoryItems.find(item => item.item_id === reservation.item_id);
-                  return (
-                    <TableRow key={reservation.id} className="border-border hover:bg-muted/30 transition-colors">
-                      <TableCell className="font-medium text-foreground px-4 py-3">
-                        {reservation.job_order_number}
-                      </TableCell>
-                      <TableCell className="text-foreground px-4 py-3 font-mono text-sm">
-                        {reservation.item_id}
-                      </TableCell>
-                      <TableCell className="text-foreground px-4 py-3">
-                        <div className="max-w-[200px]">
-                          <div className="font-medium truncate">{item?.item_name || 'Unknown Item'}</div>
-                          {item?.description && (
-                            <div className="text-xs text-muted-foreground truncate mt-1">
-                              {item.description}
+          {/* Hierarchical Reservation Groups */}
+          <div className="space-y-4">
+            {groupReservationsByStatus(reservations).map(([status, statusReservations]) => {
+              const style = getStatusGroupStyle(status);
+              const { totalQuantity, totalValue } = getGroupStats(statusReservations);
+              const isCollapsed = collapsedGroups[status];
+
+              return (
+                <div key={status} className="rounded-lg border border-border overflow-hidden">
+                  {/* Status Group Header */}
+                  <Collapsible open={!isCollapsed} onOpenChange={() => toggleGroupCollapse(status)}>
+                    <CollapsibleTrigger className="w-full">
+                      <div className={`${style.headerBg} border-b border-border p-4 hover:opacity-90 transition-opacity ${status === 'pending' ? 'ring-2 ring-yellow-400/30' : ''}`}>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2">
+                              {isCollapsed ? (
+                                <ChevronRight className={`h-4 w-4 ${style.icon}`} />
+                              ) : (
+                                <ChevronDown className={`h-4 w-4 ${style.icon}`} />
+                              )}
+                              {getStatusIcon(status)}
+                              {status === 'pending' && (
+                                <div className="flex items-center gap-1 ml-2">
+                                  <AlertTriangle className="h-4 w-4 text-orange-600" />
+                                  <span className="text-xs font-bold text-orange-700 dark:text-orange-300 bg-orange-100 dark:bg-orange-900/30 px-2 py-0.5 rounded">
+                                    NEEDS APPROVAL
+                                  </span>
+                                </div>
+                              )}
                             </div>
-                          )}
+                            <div className="text-left">
+                              <div className="flex items-center gap-2">
+                                <h3 className={`font-semibold text-lg ${style.textColor} capitalize`}>
+                                  {status} Reservations
+                                </h3>
+                                {status === 'pending' && (
+                                  <span className="text-xs font-medium text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 px-2 py-0.5 rounded">
+                                    {style.priority}
+                                  </span>
+                                )}
+                              </div>
+                              <p className={`text-sm ${style.textColor} opacity-80`}>
+                                {statusReservations.length} reservation{statusReservations.length !== 1 ? 's' : ''}
+                                {status === 'pending' && statusReservations.length > 0 && ' awaiting approval'}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className={`text-sm font-medium ${style.textColor}`}>
+                              {totalQuantity} items • ${totalValue.toFixed(2)}
+                            </div>
+                            <div className={`text-xs ${style.textColor} opacity-80`}>
+                              {status === 'pending' ? 'Pending approval value' : 'Total value in this group'}
+                            </div>
+                          </div>
                         </div>
-                      </TableCell>
-                      <TableCell className="text-foreground px-4 py-3 text-center font-semibold">
-                        {reservation.quantity}
-                      </TableCell>
-                      <TableCell className="text-foreground px-4 py-3 text-center">
-                        {reservation.actual_quantity || 0}
-                      </TableCell>
-                      <TableCell className="px-4 py-3">
-                        <div className="flex items-center justify-center gap-2">
-                          {getStatusIcon(reservation.status)}
-                          {getStatusBadge(reservation.status)}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-foreground px-4 py-3">
-                        <div className="font-medium">{reservation.requested_by}</div>
-                      </TableCell>
-                      <TableCell className="text-foreground px-4 py-3 text-center text-sm">
-                        {new Date(reservation.created_at).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: '2-digit'
-                        })}
-                      </TableCell>
-                      <TableCell className="px-4 py-3">
-                        <div className="flex items-center justify-center gap-2 min-h-[36px]">
-                          {reservation.status === 'pending' && (
-                            <>
-                              <Button
-                                size="sm"
-                                className="h-8 px-3 text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90"
-                                onClick={() => handleApproveReservation(reservation.id)}
-                                disabled={actionLoading === `approve-${reservation.id}`}
-                              >
-                                {actionLoading === `approve-${reservation.id}` ? (
-                                  <RefreshCw className="h-3 w-3 animate-spin" />
-                                ) : (
-                                  'Approve'
-                                )}
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => handleRejectReservation(reservation.id)}
-                                disabled={actionLoading === `reject-${reservation.id}`}
-                                className="h-8 px-3 text-xs font-medium"
-                              >
-                                {actionLoading === `reject-${reservation.id}` ? (
-                                  <RefreshCw className="h-3 w-3 animate-spin" />
-                                ) : (
-                                  'Reject'
-                                )}
-                              </Button>
-                            </>
-                          )}
-                          {reservation.status === 'approved' && (
-                            <>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleCompleteReservation(reservation.id)}
-                                disabled={actionLoading === `complete-${reservation.id}`}
-                                className="h-8 px-3 text-xs font-medium"
-                              >
-                                {actionLoading === `complete-${reservation.id}` ? (
-                                  <RefreshCw className="h-3 w-3 animate-spin" />
-                                ) : (
-                                  'Complete'
-                                )}
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => handleCancelReservation(reservation.id)}
-                                disabled={actionLoading === `cancel-${reservation.id}`}
-                                className="h-8 px-3 text-xs font-medium"
-                              >
-                                {actionLoading === `cancel-${reservation.id}` ? (
-                                  <RefreshCw className="h-3 w-3 animate-spin" />
-                                ) : (
-                                  'Cancel'
-                                )}
-                              </Button>
-                            </>
-                          )}
-                          {(reservation.status === 'completed' || reservation.status === 'rejected' || reservation.status === 'cancelled') && (
-                            <span className="text-xs text-muted-foreground italic">
-                              No actions available
-                            </span>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+                      </div>
+                    </CollapsibleTrigger>
+
+                    {/* Status Group Content */}
+                    <CollapsibleContent>
+                      <div className="bg-card">
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="border-border bg-muted/30">
+                              <TableHead className="text-foreground font-semibold w-[120px]">Job Order</TableHead>
+                              <TableHead className="text-foreground font-semibold w-[130px]">Part Number</TableHead>
+                              <TableHead className="text-foreground font-semibold min-w-[200px]">Description</TableHead>
+                              <TableHead className="text-foreground font-semibold w-[80px] text-center">Reserved</TableHead>
+                              <TableHead className="text-foreground font-semibold w-[80px] text-center">Consumed</TableHead>
+                              <TableHead className="text-foreground font-semibold w-[120px]">Requested By</TableHead>
+                              <TableHead className="text-foreground font-semibold w-[100px] text-center">Created</TableHead>
+                              <TableHead className="text-foreground font-semibold w-[180px] text-center">Actions</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {statusReservations.map((reservation: Reservation) => {
+                              const item = inventoryItems.find(item => item.item_id === reservation.item_id);
+                              const isUrgent = status === 'pending' &&
+                                new Date().getTime() - new Date(reservation.created_at).getTime() > 24 * 60 * 60 * 1000; // older than 24 hours
+
+                              return (
+                                <TableRow
+                                  key={reservation.id}
+                                  className={`border-border hover:bg-muted/30 transition-colors ${
+                                    isUrgent ? 'bg-red-50/50 dark:bg-red-950/20' : ''
+                                  }`}
+                                >
+                                  <TableCell className="font-medium text-foreground px-4 py-3">
+                                    <div className="flex items-center gap-2">
+                                      {isUrgent && (
+                                        <AlertTriangle className="h-4 w-4 text-red-500" />
+                                      )}
+                                      {reservation.job_order_number}
+                                    </div>
+                                  </TableCell>
+                                  <TableCell className="text-foreground px-4 py-3 font-mono text-sm">
+                                    {reservation.item_id}
+                                  </TableCell>
+                                  <TableCell className="text-foreground px-4 py-3">
+                                    <div className="max-w-[200px]">
+                                      <div className="font-medium truncate">{item?.item_name || 'Unknown Item'}</div>
+                                      {item?.description && (
+                                        <div className="text-xs text-muted-foreground truncate mt-1">
+                                          {item.description}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </TableCell>
+                                  <TableCell className="text-foreground px-4 py-3 text-center font-semibold">
+                                    {reservation.quantity}
+                                  </TableCell>
+                                  <TableCell className="text-foreground px-4 py-3 text-center">
+                                    {reservation.actual_quantity || 0}
+                                  </TableCell>
+                                  <TableCell className="text-foreground px-4 py-3">
+                                    <div className="font-medium">{reservation.requested_by}</div>
+                                  </TableCell>
+                                  <TableCell className="text-foreground px-4 py-3 text-center text-sm">
+                                    {new Date(reservation.created_at).toLocaleDateString('en-US', {
+                                      month: 'short',
+                                      day: 'numeric',
+                                      year: '2-digit'
+                                    })}
+                                  </TableCell>
+                                  <TableCell className="px-4 py-3">
+                                    <div className="flex items-center justify-center gap-2 min-h-[36px]">
+                                      {reservation.status === 'pending' && (
+                                        <>
+                                          <Button
+                                            size="sm"
+                                            className="h-8 px-3 text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90"
+                                            onClick={() => handleApproveReservation(reservation.id)}
+                                            disabled={actionLoading === `approve-${reservation.id}`}
+                                          >
+                                            {actionLoading === `approve-${reservation.id}` ? (
+                                              <RefreshCw className="h-3 w-3 animate-spin" />
+                                            ) : (
+                                              'Approve'
+                                            )}
+                                          </Button>
+                                          <Button
+                                            size="sm"
+                                            variant="destructive"
+                                            onClick={() => handleRejectReservation(reservation.id)}
+                                            disabled={actionLoading === `reject-${reservation.id}`}
+                                            className="h-8 px-3 text-xs font-medium"
+                                          >
+                                            {actionLoading === `reject-${reservation.id}` ? (
+                                              <RefreshCw className="h-3 w-3 animate-spin" />
+                                            ) : (
+                                              'Reject'
+                                            )}
+                                          </Button>
+                                        </>
+                                      )}
+                                      {reservation.status === 'approved' && (
+                                        <>
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => handleCompleteReservation(reservation.id)}
+                                            disabled={actionLoading === `complete-${reservation.id}`}
+                                            className="h-8 px-3 text-xs font-medium"
+                                          >
+                                            {actionLoading === `complete-${reservation.id}` ? (
+                                              <RefreshCw className="h-3 w-3 animate-spin" />
+                                            ) : (
+                                              'Complete'
+                                            )}
+                                          </Button>
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => handleCancelReservation(reservation.id)}
+                                            disabled={actionLoading === `cancel-${reservation.id}`}
+                                            className="h-8 px-3 text-xs font-medium"
+                                          >
+                                            {actionLoading === `cancel-${reservation.id}` ? (
+                                              <RefreshCw className="h-3 w-3 animate-spin" />
+                                            ) : (
+                                              'Cancel'
+                                            )}
+                                          </Button>
+                                        </>
+                                      )}
+                                      {(reservation.status === 'completed' || reservation.status === 'cancelled' || reservation.status === 'rejected') && (
+                                        <span className="text-xs text-muted-foreground px-3">
+                                          No actions available
+                                        </span>
+                                      )}
+                                    </div>
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
+                </div>
+              );
+            })}
+
+            {/* Empty State */}
+            {reservations.length === 0 && (
+              <div className="text-center py-12 text-muted-foreground">
+                <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <h3 className="text-lg font-medium mb-2">No reservations found</h3>
+                <p className="text-sm">Create a new reservation to get started.</p>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
