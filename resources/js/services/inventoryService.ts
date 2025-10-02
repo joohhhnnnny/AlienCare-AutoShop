@@ -92,7 +92,12 @@ class InventoryService {
 
     // Get low stock alerts
     async getLowStockAlerts(): Promise<ApiResponse<InventoryItem[]>> {
-        return api.get<ApiResponse<InventoryItem[]>>('/inventory/alerts/low-stock');
+        const response = await api.get<ApiResponse<{ alert_count: number; alerts: InventoryItem[] }>>('/inventory/alerts/low-stock');
+        // Extract the alerts array from the nested response
+        return {
+            ...response,
+            data: response.data.alerts
+        };
     }
 
     // Get dashboard analytics
@@ -108,7 +113,7 @@ class InventoryService {
         end_date?: string;
         per_page?: number;
         page?: number;
-    } = {}): Promise<PaginatedResponse<StockTransaction>> {
+    } = {}): Promise<ApiResponse<PaginatedResponse<StockTransaction>>> {
         const params: Record<string, string | number> = {};
 
         Object.entries(filters).forEach(([key, value]) => {
@@ -117,7 +122,28 @@ class InventoryService {
             }
         });
 
-        return api.get<PaginatedResponse<StockTransaction>>('/transactions', params);
+        return api.get<ApiResponse<PaginatedResponse<StockTransaction>>>('/transactions', params);
+    }
+
+    // Get archives/audit logs with filters
+    async getArchives(filters: {
+        entity_type?: string;
+        entity_id?: string;
+        action?: string;
+        start_date?: string;
+        end_date?: string;
+        per_page?: number;
+        page?: number;
+    } = {}): Promise<ApiResponse<PaginatedResponse<any>>> {
+        const params: Record<string, string | number> = {};
+
+        Object.entries(filters).forEach(([key, value]) => {
+            if (value !== undefined) {
+                params[key] = String(value);
+            }
+        });
+
+        return api.get<ApiResponse<PaginatedResponse<any>>>('/archives', params);
     }
 }
 

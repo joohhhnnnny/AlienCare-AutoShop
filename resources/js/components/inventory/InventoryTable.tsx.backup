@@ -33,13 +33,13 @@ export function InventoryTable() {
   });
 
   // Use real API data
-  const { 
-    data: inventoryData, 
-    loading, 
-    error, 
+  const {
+    data: inventoryData,
+    loading,
+    error,
     addStock,
     updateFilters,
-    refresh 
+    refresh
   } = useInventoryItems({
     search: searchTerm || undefined,
     category: categoryFilter !== "all" ? categoryFilter : undefined,
@@ -438,7 +438,7 @@ export function InventoryTable() {
                       </div>
                     </TableCell>
                     <TableCell>{getStockBadge(part)}</TableCell>
-                    <TableCell className="text-foreground">${part.unitCost.toFixed(2)}</TableCell>
+                    <TableCell className="text-foreground">₱{part.unitCost.toFixed(2)}</TableCell>
                     <TableCell className="text-foreground">{part.location}</TableCell>
                     <TableCell className="text-foreground">{part.supplier}</TableCell>
                   </TableRow>

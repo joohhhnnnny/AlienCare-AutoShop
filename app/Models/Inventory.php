@@ -85,8 +85,25 @@ class Inventory extends Model
     public function getAvailableStockAttribute(): int
     {
         $reservedStock = $this->reservations()
-            ->whereIn('status', ['pending', 'approved'])
+            ->whereIn('status', ['approved'])
             ->sum('quantity');
+
+        return max(0, $this->stock - $reservedStock);
+    }
+
+    /**
+     * Get available stock for a specific reservation action.
+     * This excludes the current reservation from the calculation to avoid double-counting.
+     */
+    public function getAvailableStockForReservation(?int $excludeReservationId = null): int
+    {
+        $query = $this->reservations()->whereIn('status', ['approved']);
+
+        if ($excludeReservationId) {
+            $query->where('reservation_id', '!=', $excludeReservationId);
+        }
+
+        $reservedStock = $query->sum('quantity');
 
         return max(0, $this->stock - $reservedStock);
     }

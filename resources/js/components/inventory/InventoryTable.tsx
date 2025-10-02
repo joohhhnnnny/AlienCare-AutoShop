@@ -513,7 +513,7 @@ export function InventoryTable() {
                       </div>
                     </TableCell>
                     <TableCell>{getStockBadge(part)}</TableCell>
-                    <TableCell className="text-foreground">${parseFloat(part.unit_price.toString()).toFixed(2)}</TableCell>
+                    <TableCell className="text-foreground">₱{parseFloat(part.unit_price.toString()).toFixed(2)}</TableCell>
                     <TableCell className="text-foreground">{part.location || 'N/A'}</TableCell>
                     <TableCell className="text-foreground">{part.supplier || 'N/A'}</TableCell>
                   </TableRow>

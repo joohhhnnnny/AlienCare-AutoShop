@@ -1,13 +1,32 @@
+import { Download, FileText, Package, TrendingUp } from "lucide-react";
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { Badge } from "./ui/badge";
-import { Button } from "./ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { FileText, Download, TrendingUp, Package, DollarSign } from "lucide-react";
+import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { mockParts, mockTransactions } from "../data/mockData";
 import { UsageReport } from "../types/inventory";
+import { Badge } from "./ui/badge";
+import { Button } from "./ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
+
+// Custom Peso Icon Component
+const PesoIcon = ({ className }: { className?: string }) => (
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M6 3v18" />
+    <path d="M6 8h7a3 3 0 0 0 0-6H6" />
+    <path d="M6 11h7a3 3 0 0 0 0-6" />
+    <path d="M4 8h10" />
+    <path d="M4 11h10" />
+  </svg>
+);
 
 export function UsageReports() {
   const [reportPeriod, setReportPeriod] = useState("daily");
@@ -60,7 +79,7 @@ export function UsageReports() {
   const usageData = generateUsageReport();
   const totalConsumed = usageData.reduce((sum, item) => sum + item.consumed, 0);
   const totalCost = usageData.reduce((sum, item) => sum + item.cost, 0);
-  const mostUsedPart = usageData.reduce((max, item) => 
+  const mostUsedPart = usageData.reduce((max, item) =>
     item.consumed > max.consumed ? item : max, usageData[0] || { consumed: 0, partNumber: 'N/A' }
   );
 
@@ -70,7 +89,7 @@ export function UsageReports() {
     const consumed = usageData
       .filter(usage => categoryParts.some(part => part.id === usage.partId))
       .reduce((sum, usage) => sum + usage.consumed, 0);
-    
+
     return {
       category,
       consumed,
@@ -96,11 +115,11 @@ export function UsageReports() {
     // Mock export functionality
     const csvContent = [
       'Part Number,Description,Consumed,Reserved,Returned,Cost',
-      ...usageData.map(item => 
+      ...usageData.map(item =>
         `${item.partNumber},${item.description},${item.consumed},${item.reserved},${item.returned},${item.cost.toFixed(2)}`
       )
     ].join('\n');
-    
+
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -165,10 +184,10 @@ export function UsageReports() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm">Total Cost</CardTitle>
-            <DollarSign className="h-4 w-4 text-green-600" />
+            <PesoIcon className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl">${totalCost.toFixed(2)}</div>
+            <div className="text-2xl">₱{totalCost.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">
               Parts consumption value
             </p>
@@ -278,10 +297,10 @@ export function UsageReports() {
                         <TableCell>{item.consumed}</TableCell>
                         <TableCell>{item.reserved}</TableCell>
                         <TableCell>{item.returned}</TableCell>
-                        <TableCell>${item.cost.toFixed(2)}</TableCell>
+                        <TableCell>₱{item.cost.toFixed(2)}</TableCell>
                         <TableCell>
                           <Badge variant={
-                            usageIntensity === 'HIGH' ? 'destructive' : 
+                            usageIntensity === 'HIGH' ? 'destructive' :
                             usageIntensity === 'MEDIUM' ? 'default' : 'secondary'
                           }>
                             {usageIntensity}

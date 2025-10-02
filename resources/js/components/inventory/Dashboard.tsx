@@ -1,9 +1,28 @@
 import { useDashboardAnalytics, useLowStockAlerts } from "@/hooks/useInventory";
 import { useReservationsSummary } from "@/hooks/useReservations";
-import { AlertTriangle, Clock, DollarSign, Loader2, Package, TrendingDown } from "lucide-react";
+import { AlertTriangle, Clock, Loader2, Package, TrendingDown } from "lucide-react";
 import { Alert, AlertDescription } from "../ui/alert";
 import { Badge } from "../ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+
+// Custom Peso Icon Component
+const PesoIcon = ({ className }: { className?: string }) => (
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M6 3v18" />
+    <path d="M6 8h7a3 3 0 0 0 0-6H6" />
+    <path d="M6 11h7a3 3 0 0 0 0-6" />
+    <path d="M4 8h10" />
+    <path d="M4 11h10" />
+  </svg>
+);
 
 export function Dashboard() {
   const { data: analytics, loading: analyticsLoading, error: analyticsError } = useDashboardAnalytics();
@@ -80,7 +99,7 @@ export function Dashboard() {
         <Card className="bg-card border-border">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm">Total Value</CardTitle>
-            <DollarSign className="h-4 w-4 text-green-600" />
+            <PesoIcon className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -91,7 +110,7 @@ export function Dashboard() {
             ) : (
               <>
                 <div className="text-2xl font-bold text-green-600">
-                  ${analytics?.total_value?.toLocaleString('en-US', { minimumFractionDigits: 2 }) || '0.00'}
+                  ₱{analytics?.total_value?.toLocaleString('en-US', { minimumFractionDigits: 2 }) || '0.00'}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Current inventory value
@@ -219,7 +238,7 @@ export function Dashboard() {
                       {category.count} items
                     </p>
                     <p className="text-lg font-bold text-primary">
-                      ${category.value?.toLocaleString('en-US', { minimumFractionDigits: 2 }) || '0.00'}
+                      ₱{category.value?.toLocaleString('en-US', { minimumFractionDigits: 2 }) || '0.00'}
                     </p>
                   </div>
                 </div>

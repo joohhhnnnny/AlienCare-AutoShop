@@ -155,7 +155,7 @@ class ReservationController extends Controller
         try {
             DB::beginTransaction();
 
-            $reservation = Reservation::findOrFail($reservationId);
+            $reservation = Reservation::with('inventory')->findOrFail($reservationId);
 
             if ($reservation->status !== 'pending') {
                 return response()->json([
@@ -174,7 +174,15 @@ class ReservationController extends Controller
 
             // Check stock availability again
             $inventory = $reservation->inventory;
-            if ($inventory->available_stock < $reservation->quantity) {
+            if (!$inventory) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Inventory item not found'
+                ], 404);
+            }
+
+            $availableStock = $inventory->getAvailableStockForReservation($reservation->reservation_id);
+            if ($availableStock < $reservation->quantity) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Insufficient stock available'
@@ -287,7 +295,7 @@ class ReservationController extends Controller
         try {
             DB::beginTransaction();
 
-            $reservation = Reservation::findOrFail($reservationId);
+            $reservation = Reservation::with('inventory')->findOrFail($reservationId);
 
             if ($reservation->status !== 'approved') {
                 return response()->json([
@@ -298,6 +306,13 @@ class ReservationController extends Controller
 
             $actualQuantity = $request->actual_quantity ?? $reservation->quantity;
             $inventory = $reservation->inventory;
+
+            if (!$inventory) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Inventory item not found'
+                ], 404);
+            }
 
             // Check stock availability
             if ($inventory->stock < $actualQuantity) {
@@ -444,6 +459,103 @@ class ReservationController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to fetch summary: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Reserve multiple parts for a single job order.
+     */
+    public function reserveMultiplePartsForJob(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'job_order_number' => 'required|string',
+            'requested_by' => 'required|string',
+            'expires_at' => 'nullable|date|after:now',
+            'notes' => 'nullable|string',
+            'items' => 'required|array|min:1',
+            'items.*.item_id' => 'required|string|exists:inventories,item_id',
+            'items.*.quantity' => 'required|integer|min:1',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $reservations = [];
+            $insufficient_stock = [];
+
+            // First, check stock availability for all items
+            foreach ($request->items as $item) {
+                $inventory = Inventory::where('item_id', $item['item_id'])->first();
+
+                if (!$inventory) {
+                    DB::rollBack();
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Inventory item not found: ' . $item['item_id']
+                    ], 404);
+                }
+
+                if ($inventory->stock < $item['quantity']) {
+                    $insufficient_stock[] = [
+                        'item_id' => $item['item_id'],
+                        'item_name' => $inventory->item_name,
+                        'requested' => $item['quantity'],
+                        'available' => $inventory->stock
+                    ];
+                }
+            }
+
+            // If any items have insufficient stock, return error
+            if (!empty($insufficient_stock)) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Insufficient stock for some items',
+                    'insufficient_stock' => $insufficient_stock
+                ], 400);
+            }
+
+            // Create reservations for all items
+            foreach ($request->items as $item) {
+                $reservation = Reservation::create([
+                    'item_id' => $item['item_id'],
+                    'quantity' => $item['quantity'],
+                    'job_order_number' => $request->job_order_number,
+                    'requested_by' => $request->requested_by,
+                    'requested_date' => now(),
+                    'expires_at' => $request->expires_at,
+                    'notes' => $request->notes,
+                    'status' => 'pending'
+                ]);
+
+                $reservation->load('inventory');
+                $reservations[] = $reservation;
+
+                // Trigger the ReservationUpdated event
+                ReservationUpdated::dispatch($reservation, 'created');
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'data' => $reservations,
+                'message' => 'Multiple reservations created successfully'
+            ], 201);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create reservations: ' . $e->getMessage()
             ], 500);
         }
     }

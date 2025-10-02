@@ -1,15 +1,15 @@
+import { CheckCircle, Clock, Package, Plus, XCircle } from "lucide-react";
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { mockParts, mockReservations } from "../data/mockData";
+import { Reservation } from "../types/inventory";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { Input } from "./ui/input";
+import { Label } from "./ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
-import { Label } from "./ui/label";
-import { Plus, Clock, CheckCircle, XCircle, Package } from "lucide-react";
-import { mockReservations, mockParts } from "../data/mockData";
-import { Reservation } from "../types/inventory";
 
 export function ReservationPanel() {
   const [reservations, setReservations] = useState(mockReservations);
@@ -74,8 +74,8 @@ export function ReservationPanel() {
   };
 
   const updateReservationStatus = (reservationId: string, newStatus: string) => {
-    setReservations(prev => prev.map(reservation => 
-      reservation.id === reservationId 
+    setReservations(prev => prev.map(reservation =>
+      reservation.id === reservationId
         ? { ...reservation, status: newStatus as any, updatedAt: new Date() }
         : reservation
     ));
@@ -111,7 +111,7 @@ export function ReservationPanel() {
             <div className="space-y-4">
               <div>
                 <Label htmlFor="part">Part</Label>
-                <Select value={newReservation.partId} onValueChange={(value) => 
+                <Select value={newReservation.partId} onValueChange={(value) =>
                   setNewReservation(prev => ({ ...prev, partId: value }))
                 }>
                   <SelectTrigger>
@@ -128,7 +128,7 @@ export function ReservationPanel() {
               </div>
               <div>
                 <Label htmlFor="jobOrder">Job Order ID</Label>
-                <Input 
+                <Input
                   id="jobOrder"
                   value={newReservation.jobOrderId}
                   onChange={(e) => setNewReservation(prev => ({ ...prev, jobOrderId: e.target.value }))}
@@ -137,7 +137,7 @@ export function ReservationPanel() {
               </div>
               <div>
                 <Label htmlFor="quantity">Quantity</Label>
-                <Input 
+                <Input
                   id="quantity"
                   type="number"
                   value={newReservation.quantity}
@@ -148,7 +148,7 @@ export function ReservationPanel() {
               </div>
               <div>
                 <Label htmlFor="requestedBy">Requested By</Label>
-                <Input 
+                <Input
                   id="requestedBy"
                   value={newReservation.requestedBy}
                   onChange={(e) => setNewReservation(prev => ({ ...prev, requestedBy: e.target.value }))}
@@ -183,7 +183,7 @@ export function ReservationPanel() {
             <Package className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl">${totalReservedValue.toFixed(2)}</div>
+            <div className="text-2xl">₱{totalReservedValue.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">
               Total reserved inventory value
             </p>
@@ -197,7 +197,7 @@ export function ReservationPanel() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl text-green-500">
-              {completedReservations.filter(r => 
+              {completedReservations.filter(r =>
                 r.updatedAt.toDateString() === new Date().toDateString()
               ).length}
             </div>
@@ -249,15 +249,15 @@ export function ReservationPanel() {
                       <TableCell>
                         {reservation.status === 'ACTIVE' && (
                           <div className="flex gap-2">
-                            <Button 
-                              size="sm" 
+                            <Button
+                              size="sm"
                               variant="outline"
                               onClick={() => updateReservationStatus(reservation.id, 'COMPLETED')}
                             >
                               Complete
                             </Button>
-                            <Button 
-                              size="sm" 
+                            <Button
+                              size="sm"
                               variant="destructive"
                               onClick={() => updateReservationStatus(reservation.id, 'CANCELLED')}
                             >

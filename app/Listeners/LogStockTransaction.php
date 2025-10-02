@@ -39,7 +39,7 @@ class LogStockTransaction implements ShouldQueue
                     'item_name' => $event->inventory->item_name,
                     'category' => $event->inventory->category
                 ],
-                'user_id' => auth()->id() ?? null,
+                'user_id' => null, // Will be set by system events
                 'notes' => "Stock {$event->action} operation",
                 'archived_date' => $event->timestamp
             ]);
@@ -49,6 +49,12 @@ class LogStockTransaction implements ShouldQueue
                 'new_stock' => $event->inventory->stock,
                 'timestamp' => $event->timestamp
             ]);
+
+            // Check for low stock and fire alert if needed
+            if ($event->inventory->isLowStock()) {
+                Log::info("Low stock detected for {$event->inventory->item_id}, firing alert event");
+                event(new \App\Events\LowStockAlert($event->inventory));
+            }
 
         } catch (\Exception $e) {
             Log::error("Failed to log stock transaction: " . $e->getMessage(), [

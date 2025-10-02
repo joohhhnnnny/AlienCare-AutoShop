@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AlertController;
 use App\Http\Controllers\Api\InventoryController;
 use App\Http\Controllers\Api\ReservationController;
 use App\Http\Controllers\Api\ReportController;
@@ -58,6 +59,7 @@ Route::prefix('reservations')->group(function () {
 
     // Core Process Routes
     Route::post('/reserve', [ReservationController::class, 'reservePartsForJob']);
+    Route::post('/reserve-multiple', [ReservationController::class, 'reserveMultiplePartsForJob']);
     Route::put('/{id}/approve', [ReservationController::class, 'approveReservation']);
     Route::put('/{id}/reject', [ReservationController::class, 'rejectReservation']);
     Route::put('/{id}/complete', [ReservationController::class, 'completeReservation']);
@@ -80,6 +82,27 @@ Route::prefix('reports')->group(function () {
     Route::get('/analytics/dashboard', [ReportController::class, 'getDashboardAnalytics']);
     Route::get('/analytics/usage', [ReportController::class, 'getUsageAnalytics']);
     Route::get('/analytics/procurement', [ReportController::class, 'getProcurementAnalytics']);
+});
+
+// Alert Management Routes
+Route::prefix('alerts')->group(function () {
+    // Get all alerts with filtering
+    Route::get('/', [AlertController::class, 'index']);
+
+    // Get alert statistics and summary
+    Route::get('/statistics', [AlertController::class, 'getAlertStatistics']);
+
+    // Generate low stock alerts
+    Route::post('/generate-low-stock', [AlertController::class, 'generateLowStockAlerts']);
+
+    // Acknowledge specific alert (using PUT since API client doesn't have PATCH)
+    Route::put('/{id}/acknowledge', [AlertController::class, 'acknowledge']);
+
+    // Bulk acknowledge alerts
+    Route::post('/bulk-acknowledge', [AlertController::class, 'bulkAcknowledge']);
+
+    // Cleanup old acknowledged alerts
+    Route::delete('/cleanup', [AlertController::class, 'cleanup']);
 });
 
 // Stock Transaction Routes (for historical data and auditing)

@@ -23,6 +23,19 @@ export interface NewReservation {
     notes?: string;
 }
 
+export interface ReservationItem {
+    item_id: string;
+    quantity: number;
+}
+
+export interface NewMultipleReservation {
+    job_order_number: string;
+    requested_by: string;
+    expires_at?: string;
+    notes?: string;
+    items: ReservationItem[];
+}
+
 export interface ReservationAction {
     approved_by?: string;
     completed_by?: string;
@@ -33,6 +46,22 @@ export interface ReservationAction {
 }
 
 class ReservationService {
+    // Transform reservation data from API response (reservation_id -> id)
+    private transformReservation(reservation: any): Reservation {
+        return {
+            ...reservation,
+            id: reservation.reservation_id || reservation.id,
+        };
+    }
+
+    // Transform paginated response
+    private transformPaginatedResponse(response: any): PaginatedResponse<Reservation> {
+        return {
+            ...response,
+            data: response.data.map((reservation: any) => this.transformReservation(reservation)),
+        };
+    }
+
     // Get all reservations with pagination and filters
     async getReservations(filters: ReservationFilters = {}): Promise<PaginatedResponse<Reservation>> {
         const params: Record<string, string | number> = {};
@@ -43,42 +72,80 @@ class ReservationService {
             }
         });
 
-        return api.get<PaginatedResponse<Reservation>>('/reservations', params);
+        const response = await api.get<ApiResponse<PaginatedResponse<any>>>('/reservations', params);
+        return this.transformPaginatedResponse(response.data);
     }
 
     // Get single reservation
     async getReservation(id: number): Promise<ApiResponse<Reservation>> {
-        return api.get<ApiResponse<Reservation>>(`/reservations/${id}`);
+        const response = await api.get<ApiResponse<any>>(`/reservations/${id}`);
+        return {
+            ...response,
+            data: this.transformReservation(response.data)
+        };
     }
 
     // Create new reservation
     async createReservation(reservation: NewReservation): Promise<ApiResponse<Reservation>> {
-        return api.post<ApiResponse<Reservation>>('/reservations/reserve', reservation);
+        const response = await api.post<ApiResponse<any>>('/reservations/reserve', reservation);
+        return {
+            ...response,
+            data: this.transformReservation(response.data)
+        };
+    }
+
+    // Create multiple reservations for a single job order
+    async createMultipleReservations(reservation: NewMultipleReservation): Promise<ApiResponse<Reservation[]>> {
+        const response = await api.post<ApiResponse<any[]>>('/reservations/reserve-multiple', reservation);
+        return {
+            ...response,
+            data: response.data.map((res: any) => this.transformReservation(res))
+        };
     }
 
     // Approve reservation
     async approveReservation(id: number, action: ReservationAction): Promise<ApiResponse<Reservation>> {
-        return api.put<ApiResponse<Reservation>>(`/reservations/${id}/approve`, action);
+        const response = await api.put<ApiResponse<any>>(`/reservations/${id}/approve`, action);
+        return {
+            ...response,
+            data: this.transformReservation(response.data)
+        };
     }
 
     // Reject reservation
     async rejectReservation(id: number, action: ReservationAction): Promise<ApiResponse<Reservation>> {
-        return api.put<ApiResponse<Reservation>>(`/reservations/${id}/reject`, action);
+        const response = await api.put<ApiResponse<any>>(`/reservations/${id}/reject`, action);
+        return {
+            ...response,
+            data: this.transformReservation(response.data)
+        };
     }
 
     // Complete reservation
     async completeReservation(id: number, action: ReservationAction): Promise<ApiResponse<Reservation>> {
-        return api.put<ApiResponse<Reservation>>(`/reservations/${id}/complete`, action);
+        const response = await api.put<ApiResponse<any>>(`/reservations/${id}/complete`, action);
+        return {
+            ...response,
+            data: this.transformReservation(response.data)
+        };
     }
 
     // Cancel reservation
     async cancelReservation(id: number, action: ReservationAction): Promise<ApiResponse<Reservation>> {
-        return api.put<ApiResponse<Reservation>>(`/reservations/${id}/cancel`, action);
+        const response = await api.put<ApiResponse<any>>(`/reservations/${id}/cancel`, action);
+        return {
+            ...response,
+            data: this.transformReservation(response.data)
+        };
     }
 
     // Get reservations by job order
     async getReservationsByJobOrder(jobOrderNumber: string): Promise<ApiResponse<Reservation[]>> {
-        return api.get<ApiResponse<Reservation[]>>('/reservations', { job_order: jobOrderNumber });
+        const response = await api.get<ApiResponse<any[]>>('/reservations', { job_order: jobOrderNumber });
+        return {
+            ...response,
+            data: response.data.map((res: any) => this.transformReservation(res))
+        };
     }
 
     // Get active reservations summary

@@ -1,4 +1,4 @@
-import { AlertCircle, DollarSign, Download, FileText, Loader2, Package, TrendingUp } from "lucide-react";
+import { AlertCircle, Download, FileText, Loader2, Package, TrendingUp } from "lucide-react";
 import { useState } from "react";
 import { useUsageReports } from "../../hooks/useUsageReports";
 import { Alert, AlertDescription } from "../ui/alert";
@@ -7,6 +7,25 @@ import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
+
+// Custom Peso Icon Component
+const PesoIcon = ({ className }: { className?: string }) => (
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M6 3v18" />
+    <path d="M6 8h7a3 3 0 0 0 0-6H6" />
+    <path d="M6 11h7a3 3 0 0 0 0-6" />
+    <path d="M4 8h10" />
+    <path d="M4 11h10" />
+  </svg>
+);
 
 export function UsageReports() {
   const [reportPeriod, setReportPeriod] = useState<'daily' | 'weekly' | 'monthly'>("daily");
@@ -159,10 +178,10 @@ export function UsageReports() {
         <Card className="bg-card border-border">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm">Total Cost</CardTitle>
-            <DollarSign className="h-4 w-4 text-primary" />
+            <PesoIcon className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-foreground">${data.summary.total_cost.toFixed(2)}</div>
+            <div className="text-2xl font-bold text-foreground">₱{data.summary.total_cost.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">
               Parts consumption value
             </p>
@@ -289,7 +308,7 @@ export function UsageReports() {
                             />
                             <div>
                               <div className="font-medium text-foreground">{cat.category}</div>
-                              <div className="text-sm text-muted-foreground">${cat.cost.toFixed(2)} total cost</div>
+                              <div className="text-sm text-muted-foreground">₱{cat.cost.toFixed(2)} total cost</div>
                             </div>
                           </div>
                           <div className="text-right">
@@ -353,7 +372,7 @@ export function UsageReports() {
                           {/* Part info below bar */}
                           <div className="mt-4 text-center max-w-[90px]">
                             <div className="font-semibold text-foreground text-sm truncate">{item.part_number}</div>
-                            <div className="text-xs text-muted-foreground font-medium mt-1">${item.cost.toFixed(2)}</div>
+                            <div className="text-xs text-muted-foreground font-medium mt-1">₱{item.cost.toFixed(2)}</div>
                           </div>
                         </div>
                       );
@@ -399,7 +418,7 @@ export function UsageReports() {
                           </div>
                           <div className="text-right flex-shrink-0 ml-4">
                             <div className="font-bold text-foreground">{item.consumed} units</div>
-                            <div className="text-sm text-muted-foreground">${item.cost.toFixed(2)}</div>
+                            <div className="text-sm text-muted-foreground">₱{item.cost.toFixed(2)}</div>
                           </div>
                         </div>
                       </div>
@@ -443,8 +462,8 @@ export function UsageReports() {
                         </TableCell>
                         <TableCell className="text-foreground">{item.category}</TableCell>
                         <TableCell className="text-foreground">{item.consumed}</TableCell>
-                        <TableCell className="text-foreground">${item.cost.toFixed(2)}</TableCell>
-                        <TableCell className="text-foreground">${item.unit_price}</TableCell>
+                        <TableCell className="text-foreground">₱{item.cost.toFixed(2)}</TableCell>
+                        <TableCell className="text-foreground">₱{item.unit_price}</TableCell>
                         <TableCell className="text-foreground">{item.transaction_count}</TableCell>
                         <TableCell>
                           <Badge variant={

@@ -10,6 +10,7 @@ class Reservation extends Model
 {
     use HasFactory;
 
+    // Use 'reservation_id' as the primary key to match the database schema
     protected $primaryKey = 'reservation_id';
 
     protected $fillable = [
