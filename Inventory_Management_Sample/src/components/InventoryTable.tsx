@@ -1,13 +1,12 @@
+import { AlertTriangle, CheckCircle, Package, Search } from "lucide-react";
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { Input } from "./ui/input";
-import { Badge } from "./ui/badge";
-import { Button } from "./ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
-import { Search, Package, AlertTriangle, CheckCircle } from "lucide-react";
 import { mockParts } from "../data/mockData";
 import { Part } from "../types/inventory";
+import { Badge } from "./ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Input } from "./ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table";
 
 export function InventoryTable() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -20,17 +19,17 @@ export function InventoryTable() {
     const matchesSearch = part.partNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          part.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = categoryFilter === "all" || part.category === categoryFilter;
-    const matchesStock = stockFilter === "all" || 
+    const matchesStock = stockFilter === "all" ||
                         (stockFilter === "low" && part.currentStock <= part.minThreshold) ||
                         (stockFilter === "good" && part.currentStock > part.minThreshold);
-    
+
     return matchesSearch && matchesCategory && matchesStock;
   });
 
   const getStockStatus = (part: Part) => {
     const stockPercentage = part.currentStock / part.maxCapacity;
     const isBelowThreshold = part.currentStock <= part.minThreshold;
-    
+
     if (isBelowThreshold) {
       return part.currentStock === 0 ? 'OUT_OF_STOCK' : 'LOW_STOCK';
     } else if (stockPercentage >= 0.8) {
@@ -42,7 +41,7 @@ export function InventoryTable() {
 
   const getStockBadge = (part: Part) => {
     const status = getStockStatus(part);
-    
+
     switch (status) {
       case 'OUT_OF_STOCK':
         return <Badge variant="destructive" className="flex items-center gap-1">
@@ -157,7 +156,7 @@ export function InventoryTable() {
                           </span>
                         </div>
                         <div className="w-full bg-muted rounded-full h-2">
-                          <div 
+                          <div
                             className={`h-2 rounded-full ${getStockBarColor(part)}`}
                             style={{ width: `${Math.min((part.currentStock / part.maxCapacity) * 100, 100)}%` }}
                           />
@@ -165,7 +164,7 @@ export function InventoryTable() {
                       </div>
                     </TableCell>
                     <TableCell>{getStockBadge(part)}</TableCell>
-                    <TableCell>${part.unitCost.toFixed(2)}</TableCell>
+                    <TableCell>₱{part.unitCost.toFixed(2)}</TableCell>
                     <TableCell>{part.location}</TableCell>
                     <TableCell>{part.supplier}</TableCell>
                   </TableRow>

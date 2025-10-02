@@ -133,13 +133,13 @@ The system analyzes real stock transactions with `transaction_type = 'sale'` to 
 ### Backend API Testing
 ✅ **Usage Analytics Endpoint**: Successfully returns real data
 - Total consumed: 67 items
-- Total cost: $3,897.30
+- Total cost: ₱3,897.30
 - 7 unique items used
 - 5 active categories
 
 ✅ **Procurement Analytics Endpoint**: Successfully returns real data
 - Total procured: 189 items
-- Total cost: $8,442.16
+- Total cost: ₱8,442.16
 - 8 unique items procured
 - 5 suppliers active
 

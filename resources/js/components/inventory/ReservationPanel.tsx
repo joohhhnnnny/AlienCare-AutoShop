@@ -620,7 +620,7 @@ export function ReservationPanel() {
             <Package className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-foreground">${totalReservedValue.toFixed(2)}</div>
+            <div className="text-2xl font-bold text-foreground">₱{totalReservedValue.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">
               Total reserved inventory value
             </p>
@@ -672,25 +672,13 @@ export function ReservationPanel() {
                                 <ChevronDown className={`h-4 w-4 ${style.icon}`} />
                               )}
                               {getStatusIcon(status)}
-                              {status === 'pending' && (
-                                <div className="flex items-center gap-1 ml-2">
-                                  <AlertTriangle className="h-4 w-4 text-orange-600" />
-                                  <span className="text-xs font-bold text-orange-700 dark:text-orange-300 bg-orange-100 dark:bg-orange-900/30 px-2 py-0.5 rounded">
-                                    NEEDS APPROVAL
-                                  </span>
-                                </div>
-                              )}
+
                             </div>
                             <div className="text-left">
                               <div className="flex items-center gap-2">
                                 <h3 className={`font-semibold text-lg ${style.textColor} capitalize`}>
                                   {status} Reservations
                                 </h3>
-                                {status === 'pending' && (
-                                  <span className="text-xs font-medium text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30 px-2 py-0.5 rounded">
-                                    {style.priority}
-                                  </span>
-                                )}
                               </div>
                               <p className={`text-sm ${style.textColor} opacity-80`}>
                                 {statusReservations.length} reservation{statusReservations.length !== 1 ? 's' : ''}
@@ -700,7 +688,7 @@ export function ReservationPanel() {
                           </div>
                           <div className="text-right">
                             <div className={`text-sm font-medium ${style.textColor}`}>
-                              {totalQuantity} items • ${totalValue.toFixed(2)}
+                              {totalQuantity} items • ₱{totalValue.toFixed(2)}
                             </div>
                             <div className={`text-xs ${style.textColor} opacity-80`}>
                               {status === 'pending' ? 'Pending approval value' : 'Total value in this group'}
