@@ -36,8 +36,18 @@ class ReservationController extends Controller
             $query->where('item_id', $request->item_id);
         }
 
-        $reservations = $query->orderBy('requested_date', 'desc')
-                             ->paginate($request->get('per_page', 15));
+        // Order by priority: pending first (most urgent), then by date
+        $reservations = $query->orderByRaw("
+                CASE status
+                    WHEN 'pending' THEN 1
+                    WHEN 'approved' THEN 2
+                    WHEN 'completed' THEN 3
+                    WHEN 'cancelled' THEN 4
+                    WHEN 'rejected' THEN 5
+                    ELSE 6
+                END, requested_date DESC
+            ")
+            ->paginate($request->get('per_page', 15));
 
         return response()->json([
             'success' => true,

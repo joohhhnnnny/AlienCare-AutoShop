@@ -33,6 +33,20 @@ export function useReservations(initialFilters: ReservationFilters = {}) {
         fetchReservations();
     }, [fetchReservations]);
 
+    // Set up real-time event listeners for reservation updates
+    useEffect(() => {
+        const handleReservationUpdate = () => {
+            fetchReservations();
+        };
+
+        // Listen for reservation update events
+        window.addEventListener('reservation-updated', handleReservationUpdate);
+
+        return () => {
+            window.removeEventListener('reservation-updated', handleReservationUpdate);
+        };
+    }, [fetchReservations]);
+
     const updateFilters = useCallback((newFilters: Partial<ReservationFilters>) => {
         setFilters(prev => ({ ...prev, ...newFilters }));
     }, []);
@@ -40,7 +54,9 @@ export function useReservations(initialFilters: ReservationFilters = {}) {
     const createReservation = useCallback(async (reservation: NewReservation) => {
         try {
             const response = await reservationService.createReservation(reservation);
-            await fetchReservations(); // Refresh data
+
+            // Immediate refresh
+            await fetchReservations();
 
             // Dispatch event for real-time updates
             dispatchReservationUpdate('new', 'created', {
@@ -48,6 +64,11 @@ export function useReservations(initialFilters: ReservationFilters = {}) {
                 quantity: reservation.quantity,
                 job_order_number: reservation.job_order_number
             });
+
+            // Additional refresh after a short delay to ensure consistency
+            setTimeout(() => {
+                fetchReservations();
+            }, 500);
 
             return { success: true, data: response.data };
         } catch (err) {
@@ -60,13 +81,20 @@ export function useReservations(initialFilters: ReservationFilters = {}) {
     const createMultipleReservations = useCallback(async (reservation: NewMultipleReservation) => {
         try {
             const response = await reservationService.createMultipleReservations(reservation);
-            await fetchReservations(); // Refresh data
+
+            // Immediate refresh
+            await fetchReservations();
 
             // Dispatch event for real-time updates
             dispatchReservationUpdate('multiple', 'created', {
                 items: reservation.items,
                 job_order_number: reservation.job_order_number
             });
+
+            // Additional refresh after a short delay to ensure consistency
+            setTimeout(() => {
+                fetchReservations();
+            }, 500);
 
             return { success: true, data: response.data };
         } catch (err) {

@@ -26,8 +26,9 @@ export function ReservationPanel() {
     rejectReservation,
     completeReservation,
     cancelReservation,
-    updateFilters
-  } = useReservations();
+    updateFilters,
+    refresh: refreshReservations
+  } = useReservations({ per_page: 50 }); // Request more items to ensure we see pending reservations
 
   const { data: inventoryData, loading: inventoryLoading } = useInventoryItems();
 
@@ -53,7 +54,12 @@ export function ReservationPanel() {
   });
 
   // Extract data from responses with proper type checking
-  const reservations = Array.isArray(reservationsData?.data) ? reservationsData.data : [];
+  const reservations: any[] = Array.isArray(reservationsData?.data) ? reservationsData.data : [];
+  console.log('Current reservations data:', reservations.length, 'total reservations');
+  console.log('Raw reservationsData:', reservationsData);
+  console.log('Reservation statuses:', reservations.map(r => r.status));
+  console.log('Pending reservations:', reservations.filter(r => r.status === 'pending').length);
+
   const inventoryItems = Array.isArray(inventoryData?.data?.data) ? inventoryData.data.data : [];
   const loading = reservationsLoading || inventoryLoading;
 
@@ -174,8 +180,10 @@ export function ReservationPanel() {
 
   // Auto-expand pending reservations if they exist
   const checkAndExpandPendingReservations = () => {
-    const pendingReservations = reservations.filter(r => r.status === 'pending');
+    const pendingReservations = reservations.filter((r: any) => r.status === 'pending');
+    console.log('Checking pending reservations:', pendingReservations.length, 'found');
     if (pendingReservations.length > 0 && collapsedGroups.pending) {
+      console.log('Auto-expanding pending reservations section');
       setCollapsedGroups(prev => ({
         ...prev,
         pending: false // Ensure pending is always visible when they exist
@@ -308,6 +316,10 @@ export function ReservationPanel() {
         // Reset form
         resetReservationForm();
         setIsDialogOpen(false);
+
+        // Force immediate refresh of reservations
+        refreshReservations();
+
         // You could show a success toast here instead of alert
         alert(`Reservation${validItems.length > 1 ? 's' : ''} created successfully`);
       } else {
