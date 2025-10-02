@@ -11,10 +11,9 @@ class Inventory extends Model
     use HasFactory;
 
     protected $table = 'inventories';
-    // Using default 'id' primary key instead of 'inventory_id'
+    protected $primaryKey = 'item_id'; // Using item_id as primary key
 
     protected $fillable = [
-        'item_id',
         'item_name',
         'description',
         'category',
@@ -80,15 +79,18 @@ class Inventory extends Model
     }
 
     /**
-     * Get available stock (total stock minus reserved).
+     * Get available stock (stock is already deducted for approved reservations).
+     * Now we only need to consider pending reservations as "potentially reserved".
      */
     public function getAvailableStockAttribute(): int
     {
-        $reservedStock = $this->reservations()
-            ->whereIn('status', ['approved'])
+        // Since approved reservations now deduct stock immediately,
+        // we only need to consider pending reservations as potentially unavailable
+        $pendingReservations = $this->reservations()
+            ->where('status', 'pending')
             ->sum('quantity');
 
-        return max(0, $this->stock - $reservedStock);
+        return max(0, $this->stock - $pendingReservations);
     }
 
     /**
@@ -97,15 +99,15 @@ class Inventory extends Model
      */
     public function getAvailableStockForReservation(?int $excludeReservationId = null): int
     {
-        $query = $this->reservations()->whereIn('status', ['approved']);
+        $query = $this->reservations()->where('status', 'pending');
 
         if ($excludeReservationId) {
-            $query->where('reservation_id', '!=', $excludeReservationId);
+            $query->where('id', '!=', $excludeReservationId);
         }
 
-        $reservedStock = $query->sum('quantity');
+        $pendingReservations = $query->sum('quantity');
 
-        return max(0, $this->stock - $reservedStock);
+        return max(0, $this->stock - $pendingReservations);
     }
 
     /**

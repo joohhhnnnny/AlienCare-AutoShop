@@ -1,0 +1,66 @@
+[
+    {
+        "cid": 0,
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt_value": null,
+        "pk": 1
+    },
+    {
+        "cid": 1,
+        "name": "name",
+        "type": "varchar",
+        "notnull": 1,
+        "dflt_value": null,
+        "pk": 0
+    },
+    {
+        "cid": 2,
+        "name": "email",
+        "type": "varchar",
+        "notnull": 1,
+        "dflt_value": null,
+        "pk": 0
+    },
+    {
+        "cid": 3,
+        "name": "email_verified_at",
+        "type": "datetime",
+        "notnull": 0,
+        "dflt_value": null,
+        "pk": 0
+    },
+    {
+        "cid": 4,
+        "name": "password",
+        "type": "varchar",
+        "notnull": 1,
+        "dflt_value": null,
+        "pk": 0
+    },
+    {
+        "cid": 5,
+        "name": "remember_token",
+        "type": "varchar",
+        "notnull": 0,
+        "dflt_value": null,
+        "pk": 0
+    },
+    {
+        "cid": 6,
+        "name": "created_at",
+        "type": "datetime",
+        "notnull": 0,
+        "dflt_value": null,
+        "pk": 0
+    },
+    {
+        "cid": 7,
+        "name": "updated_at",
+        "type": "datetime",
+        "notnull": 0,
+        "dflt_value": null,
+        "pk": 0
+    }
+]

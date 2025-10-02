@@ -1,0 +1,98 @@
+{
+    "backup_date": "2025-10-02 12:59:38",
+    "backup_directory": "database_backup_2025-10-02_12-59-38",
+    "total_tables": 15,
+    "total_records": 189,
+    "tables": {
+        "migrations": {
+            "records": 10,
+            "data_file": "database_backup_2025-10-02_12-59-38\/migrations.json",
+            "structure_file": "database_backup_2025-10-02_12-59-38\/migrations_structure.json",
+            "status": "success"
+        },
+        "users": {
+            "records": 4,
+            "data_file": "database_backup_2025-10-02_12-59-38\/users.json",
+            "structure_file": "database_backup_2025-10-02_12-59-38\/users_structure.json",
+            "status": "success"
+        },
+        "password_reset_tokens": {
+            "records": 0,
+            "data_file": "database_backup_2025-10-02_12-59-38\/password_reset_tokens.json",
+            "structure_file": "database_backup_2025-10-02_12-59-38\/password_reset_tokens_structure.json",
+            "status": "success"
+        },
+        "sessions": {
+            "records": 2,
+            "data_file": "database_backup_2025-10-02_12-59-38\/sessions.json",
+            "structure_file": "database_backup_2025-10-02_12-59-38\/sessions_structure.json",
+            "status": "success"
+        },
+        "cache": {
+            "records": 4,
+            "data_file": "database_backup_2025-10-02_12-59-38\/cache.json",
+            "structure_file": "database_backup_2025-10-02_12-59-38\/cache_structure.json",
+            "status": "success"
+        },
+        "cache_locks": {
+            "records": 0,
+            "data_file": "database_backup_2025-10-02_12-59-38\/cache_locks.json",
+            "structure_file": "database_backup_2025-10-02_12-59-38\/cache_locks_structure.json",
+            "status": "success"
+        },
+        "jobs": {
+            "records": 60,
+            "data_file": "database_backup_2025-10-02_12-59-38\/jobs.json",
+            "structure_file": "database_backup_2025-10-02_12-59-38\/jobs_structure.json",
+            "status": "success"
+        },
+        "job_batches": {
+            "records": 0,
+            "data_file": "database_backup_2025-10-02_12-59-38\/job_batches.json",
+            "structure_file": "database_backup_2025-10-02_12-59-38\/job_batches_structure.json",
+            "status": "success"
+        },
+        "failed_jobs": {
+            "records": 0,
+            "data_file": "database_backup_2025-10-02_12-59-38\/failed_jobs.json",
+            "structure_file": "database_backup_2025-10-02_12-59-38\/failed_jobs_structure.json",
+            "status": "success"
+        },
+        "inventories": {
+            "records": 11,
+            "data_file": "database_backup_2025-10-02_12-59-38\/inventories.json",
+            "structure_file": "database_backup_2025-10-02_12-59-38\/inventories_structure.json",
+            "status": "success"
+        },
+        "reports": {
+            "records": 1,
+            "data_file": "database_backup_2025-10-02_12-59-38\/reports.json",
+            "structure_file": "database_backup_2025-10-02_12-59-38\/reports_structure.json",
+            "status": "success"
+        },
+        "archives": {
+            "records": 2,
+            "data_file": "database_backup_2025-10-02_12-59-38\/archives.json",
+            "structure_file": "database_backup_2025-10-02_12-59-38\/archives_structure.json",
+            "status": "success"
+        },
+        "reservations": {
+            "records": 24,
+            "data_file": "database_backup_2025-10-02_12-59-38\/reservations.json",
+            "structure_file": "database_backup_2025-10-02_12-59-38\/reservations_structure.json",
+            "status": "success"
+        },
+        "stock_transactions": {
+            "records": 61,
+            "data_file": "database_backup_2025-10-02_12-59-38\/stock_transactions.json",
+            "structure_file": "database_backup_2025-10-02_12-59-38\/stock_transactions_structure.json",
+            "status": "success"
+        },
+        "alerts": {
+            "records": 10,
+            "data_file": "database_backup_2025-10-02_12-59-38\/alerts.json",
+            "structure_file": "database_backup_2025-10-02_12-59-38\/alerts_structure.json",
+            "status": "success"
+        }
+    }
+}

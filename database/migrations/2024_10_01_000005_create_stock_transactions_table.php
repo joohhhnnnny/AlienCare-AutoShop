@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('stock_transactions', function (Blueprint $table) {
-            $table->id('transaction_id');
-            $table->string('item_id');
+            $table->id(); // Auto-incrementing primary key for transactions
+            $table->unsignedBigInteger('item_id'); // Foreign key to inventories.item_id
             $table->enum('transaction_type', [
                 'procurement',
                 'sale',

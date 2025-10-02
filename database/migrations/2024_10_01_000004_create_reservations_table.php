@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('reservations', function (Blueprint $table) {
-            $table->id('reservation_id');
-            $table->string('item_id');
+            $table->id(); // Auto-incrementing primary key for reservations
+            $table->unsignedBigInteger('item_id'); // Foreign key to inventories.item_id
             $table->integer('quantity');
             $table->enum('status', ['pending', 'approved', 'rejected', 'completed', 'cancelled'])->default('pending');
             $table->string('job_order_number')->nullable();

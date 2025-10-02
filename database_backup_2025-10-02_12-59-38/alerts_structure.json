@@ -1,0 +1,122 @@
+[
+    {
+        "cid": 0,
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt_value": null,
+        "pk": 1
+    },
+    {
+        "cid": 1,
+        "name": "item_id",
+        "type": "varchar",
+        "notnull": 1,
+        "dflt_value": null,
+        "pk": 0
+    },
+    {
+        "cid": 2,
+        "name": "item_name",
+        "type": "varchar",
+        "notnull": 1,
+        "dflt_value": null,
+        "pk": 0
+    },
+    {
+        "cid": 3,
+        "name": "current_stock",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt_value": null,
+        "pk": 0
+    },
+    {
+        "cid": 4,
+        "name": "reorder_level",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt_value": null,
+        "pk": 0
+    },
+    {
+        "cid": 5,
+        "name": "category",
+        "type": "varchar",
+        "notnull": 1,
+        "dflt_value": null,
+        "pk": 0
+    },
+    {
+        "cid": 6,
+        "name": "supplier",
+        "type": "varchar",
+        "notnull": 0,
+        "dflt_value": null,
+        "pk": 0
+    },
+    {
+        "cid": 7,
+        "name": "urgency",
+        "type": "varchar",
+        "notnull": 1,
+        "dflt_value": "'medium'",
+        "pk": 0
+    },
+    {
+        "cid": 8,
+        "name": "alert_type",
+        "type": "varchar",
+        "notnull": 1,
+        "dflt_value": "'low_stock'",
+        "pk": 0
+    },
+    {
+        "cid": 9,
+        "name": "message",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt_value": null,
+        "pk": 0
+    },
+    {
+        "cid": 10,
+        "name": "acknowledged",
+        "type": "tinyint(1)",
+        "notnull": 1,
+        "dflt_value": "'0'",
+        "pk": 0
+    },
+    {
+        "cid": 11,
+        "name": "acknowledged_by",
+        "type": "varchar",
+        "notnull": 0,
+        "dflt_value": null,
+        "pk": 0
+    },
+    {
+        "cid": 12,
+        "name": "acknowledged_at",
+        "type": "datetime",
+        "notnull": 0,
+        "dflt_value": null,
+        "pk": 0
+    },
+    {
+        "cid": 13,
+        "name": "created_at",
+        "type": "datetime",
+        "notnull": 0,
+        "dflt_value": null,
+        "pk": 0
+    },
+    {
+        "cid": 14,
+        "name": "updated_at",
+        "type": "datetime",
+        "notnull": 0,
+        "dflt_value": null,
+        "pk": 0
+    }
+]

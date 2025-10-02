@@ -2,7 +2,7 @@ import { api, ApiResponse, PaginatedResponse } from '../lib/api';
 
 export interface Alert {
   id: number;
-  item_id: string;
+  item_id: number;
   item_name: string;
   current_stock: number;
   reorder_level: number;
@@ -18,7 +18,7 @@ export interface Alert {
   updated_at: string;
   inventory_item?: {
     id: number;
-    item_id: string;
+    item_id: number;
     item_name: string;
     category: string;
     current_stock: number;

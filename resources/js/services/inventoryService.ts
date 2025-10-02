@@ -15,14 +15,14 @@ export interface InventoryFilters {
 }
 
 export interface StockOperation {
-    item_id: string;
+    item_id: number;
     quantity: number;
     reference_number?: string;
     notes?: string;
 }
 
 export interface NewInventoryItem {
-    item_id: string;
+    item_id?: number; // Optional since it's auto-generated
     item_name: string;
     description: string;
     category: string;
@@ -58,7 +58,7 @@ class InventoryService {
     }
 
     // Update inventory item
-    async updateInventoryItem(itemId: string, item: Partial<NewInventoryItem>): Promise<ApiResponse<InventoryItem>> {
+    async updateInventoryItem(itemId: number, item: Partial<NewInventoryItem>): Promise<ApiResponse<InventoryItem>> {
         return api.put<ApiResponse<InventoryItem>>(`/inventory/${itemId}`, item);
     }
 

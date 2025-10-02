@@ -9,7 +9,7 @@ class Report extends Model
 {
     use HasFactory;
 
-    protected $primaryKey = 'report_id';
+    // Using default 'id' primary key (auto-incrementing)
 
     protected $fillable = [
         'report_type',

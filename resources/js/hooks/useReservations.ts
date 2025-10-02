@@ -49,10 +49,11 @@ export function useReservations(initialFilters: ReservationFilters = {}) {
                 job_order_number: reservation.job_order_number
             });
 
-            return true;
+            return { success: true, data: response.data };
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to create reservation');
-            return false;
+            const errorMessage = err instanceof Error ? err.message : 'Failed to create reservation';
+            setError(errorMessage);
+            return { success: false, error: errorMessage };
         }
     }, [fetchReservations]);
 
@@ -67,70 +68,75 @@ export function useReservations(initialFilters: ReservationFilters = {}) {
                 job_order_number: reservation.job_order_number
             });
 
-            return true;
+            return { success: true, data: response.data };
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to create multiple reservations');
-            return false;
+            const errorMessage = err instanceof Error ? err.message : 'Failed to create multiple reservations';
+            setError(errorMessage);
+            return { success: false, error: errorMessage };
         }
     }, [fetchReservations]);
 
     const approveReservation = useCallback(async (id: number, action: ReservationAction) => {
         try {
-            await reservationService.approveReservation(id, action);
+            const response = await reservationService.approveReservation(id, action);
             await fetchReservations(); // Refresh data
 
             // Dispatch event for real-time updates
             dispatchReservationUpdate(id.toString(), 'approved', action);
 
-            return true;
+            return { success: true, data: response.data };
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to approve reservation');
-            return false;
+            const errorMessage = err instanceof Error ? err.message : 'Failed to approve reservation';
+            setError(errorMessage);
+            return { success: false, error: errorMessage };
         }
     }, [fetchReservations]);
 
     const rejectReservation = useCallback(async (id: number, action: ReservationAction) => {
         try {
-            await reservationService.rejectReservation(id, action);
+            const response = await reservationService.rejectReservation(id, action);
             await fetchReservations(); // Refresh data
 
             // Dispatch event for real-time updates
             dispatchReservationUpdate(id.toString(), 'rejected', action);
 
-            return true;
+            return { success: true, data: response.data };
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to reject reservation');
-            return false;
+            const errorMessage = err instanceof Error ? err.message : 'Failed to reject reservation';
+            setError(errorMessage);
+            return { success: false, error: errorMessage };
         }
     }, [fetchReservations]);
 
     const completeReservation = useCallback(async (id: number, action: ReservationAction) => {
         try {
-            await reservationService.completeReservation(id, action);
+            const response = await reservationService.completeReservation(id, action);
             await fetchReservations(); // Refresh data
 
             // Dispatch event for real-time updates
             dispatchReservationUpdate(id.toString(), 'completed', action);
 
-            return true;
+            return { success: true, data: response.data };
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to complete reservation');
-            return false;
+            const errorMessage = err instanceof Error ? err.message : 'Failed to complete reservation';
+            setError(errorMessage);
+            return { success: false, error: errorMessage };
         }
     }, [fetchReservations]);
 
     const cancelReservation = useCallback(async (id: number, action: ReservationAction) => {
         try {
-            await reservationService.cancelReservation(id, action);
+            const response = await reservationService.cancelReservation(id, action);
             await fetchReservations(); // Refresh data
 
             // Dispatch event for real-time updates
             dispatchReservationUpdate(id.toString(), 'cancelled', action);
 
-            return true;
+            return { success: true, data: response.data };
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to cancel reservation');
-            return false;
+            const errorMessage = err instanceof Error ? err.message : 'Failed to cancel reservation';
+            setError(errorMessage);
+            return { success: false, error: errorMessage };
         }
     }, [fetchReservations]);
 

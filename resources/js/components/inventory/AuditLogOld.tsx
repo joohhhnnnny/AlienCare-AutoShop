@@ -27,7 +27,7 @@ export function AuditLog() {
 
   // Apply local filters to transactions
   const filteredTransactions = transactions.filter(transaction => {
-    const matchesSearch = transaction.item_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch = transaction.item_id?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
                          transaction.notes?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          transaction.job_order_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          transaction.reason?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -88,7 +88,7 @@ export function AuditLog() {
             Complete record of all inventory transactions and changes
           </p>
         </div>
-        
+
         <Button
           onClick={refresh}
           disabled={refreshing}

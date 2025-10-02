@@ -12,8 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('inventories', function (Blueprint $table) {
-            $table->id(); // Using standard id field
-            $table->string('item_id')->unique();
+            $table->id('item_id'); // Auto-incrementing integer primary key named item_id
             $table->string('item_name');
             $table->text('description')->nullable();
             $table->string('category');
