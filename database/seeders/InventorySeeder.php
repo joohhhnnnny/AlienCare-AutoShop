@@ -21,7 +21,6 @@ class InventorySeeder extends Seeder
         // Create sample inventory items
         $inventoryItems = [
             [
-                'item_id' => 'BRK-PAD-001',
                 'item_name' => 'Brake Pads - Front Set',
                 'description' => 'High-performance ceramic brake pads for front wheels',
                 'category' => 'Brakes',
@@ -33,7 +32,6 @@ class InventorySeeder extends Seeder
                 'status' => 'active',
             ],
             [
-                'item_id' => 'ENG-OIL-5W30',
                 'item_name' => 'Engine Oil 5W-30',
                 'description' => 'Synthetic motor oil 5W-30, 5-liter container',
                 'category' => 'Oils & Fluids',
@@ -45,7 +43,6 @@ class InventorySeeder extends Seeder
                 'status' => 'active',
             ],
             [
-                'item_id' => 'BAT-12V-75AH',
                 'item_name' => 'Car Battery 12V 75AH',
                 'description' => 'Lead-acid car battery with 75AH capacity',
                 'category' => 'Electrical',
@@ -57,7 +54,6 @@ class InventorySeeder extends Seeder
                 'status' => 'active',
             ],
             [
-                'item_id' => 'TIRE-205-65R16',
                 'item_name' => 'All-Season Tire 205/65R16',
                 'description' => 'All-season passenger tire 205/65R16',
                 'category' => 'Tires',
@@ -69,7 +65,6 @@ class InventorySeeder extends Seeder
                 'status' => 'active',
             ],
             [
-                'item_id' => 'OIL-FLT-5W30',
                 'item_name' => 'Oil Filter - 5W30 Compatible',
                 'description' => 'High-efficiency oil filter compatible with 5W30 oil',
                 'category' => 'Filters',
@@ -81,7 +76,6 @@ class InventorySeeder extends Seeder
                 'status' => 'active',
             ],
             [
-                'item_id' => 'SPARK-PLG-NGK',
                 'item_name' => 'NGK Spark Plugs (Set of 4)',
                 'description' => 'NGK Iridium spark plugs, set of 4',
                 'category' => 'Engine',
@@ -93,7 +87,6 @@ class InventorySeeder extends Seeder
                 'status' => 'active',
             ],
             [
-                'item_id' => 'AIR-FLT-STD',
                 'item_name' => 'Air Filter - Standard',
                 'description' => 'Standard air filter for most passenger vehicles',
                 'category' => 'Filters',
@@ -105,7 +98,6 @@ class InventorySeeder extends Seeder
                 'status' => 'active',
             ],
             [
-                'item_id' => 'WIPER-BLD-24',
                 'item_name' => 'Windshield Wiper Blade 24"',
                 'description' => '24-inch windshield wiper blade',
                 'category' => 'Electrical',
@@ -162,11 +154,17 @@ class InventorySeeder extends Seeder
         }
 
         // Create some reservations
+        $brakeItem = Inventory::where('item_name', 'Brake Pads - Front Set')->first();
+        $oilItem = Inventory::where('item_name', 'Engine Oil 5W-30')->first();
+        $batteryItem = Inventory::where('item_name', 'Car Battery 12V 75AH')->first();
+
         $reservations = [
             [
-                'item_id' => 'BRK-PAD-001',
+                'item_id' => $brakeItem->item_id,
                 'quantity' => 2,
                 'status' => 'pending',
+                'priority_level' => 2,
+                'is_urgent' => false,
                 'job_order_number' => 'JO-2024-1001',
                 'requested_by' => 'John Mechanic',
                 'requested_date' => now()->subDays(2),
@@ -174,9 +172,11 @@ class InventorySeeder extends Seeder
                 'notes' => 'Brake service for customer vehicle',
             ],
             [
-                'item_id' => 'ENG-OIL-5W30',
+                'item_id' => $oilItem->item_id,
                 'quantity' => 1,
                 'status' => 'approved',
+                'priority_level' => 1,
+                'is_urgent' => false,
                 'job_order_number' => 'JO-2024-1002',
                 'requested_by' => 'Mike Technician',
                 'approved_by' => 'Sarah Manager',
@@ -186,15 +186,18 @@ class InventorySeeder extends Seeder
                 'notes' => 'Oil change service',
             ],
             [
-                'item_id' => 'BAT-12V-75AH',
+                'item_id' => $batteryItem->item_id,
                 'quantity' => 1,
                 'status' => 'completed',
+                'priority_level' => 3,
+                'is_urgent' => true,
                 'job_order_number' => 'JO-2024-1003',
                 'requested_by' => 'Lisa Mechanic',
                 'approved_by' => 'Sarah Manager',
                 'requested_date' => now()->subDays(3),
                 'approved_date' => now()->subDays(2),
                 'expires_at' => now()->addDays(1),
+                'estimated_completion' => now()->subDays(1),
                 'notes' => 'Battery replacement',
             ],
         ];

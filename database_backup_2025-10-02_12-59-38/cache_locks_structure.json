@@ -1,0 +1,26 @@
+[
+    {
+        "cid": 0,
+        "name": "key",
+        "type": "varchar",
+        "notnull": 1,
+        "dflt_value": null,
+        "pk": 1
+    },
+    {
+        "cid": 1,
+        "name": "owner",
+        "type": "varchar",
+        "notnull": 1,
+        "dflt_value": null,
+        "pk": 0
+    },
+    {
+        "cid": 2,
+        "name": "expiration",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt_value": null,
+        "pk": 0
+    }
+]

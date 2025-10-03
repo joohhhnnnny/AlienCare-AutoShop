@@ -1,7 +1,7 @@
 // Updated to match Laravel backend Inventory model
 export interface InventoryItem {
   id: number;
-  item_id: string;
+  item_id: number;
   item_name: string;
   description: string;
   category: string;
@@ -32,7 +32,7 @@ export interface Part extends Omit<InventoryItem, 'id' | 'item_id' | 'item_name'
 // Updated to match Laravel backend StockTransaction model
 export interface StockTransaction {
   id: number;
-  item_id: string;
+  item_id: number;
   transaction_type: 'procurement' | 'sale' | 'return' | 'damage' | 'adjustment';
   quantity: number;
   balance_after: number;
@@ -47,7 +47,7 @@ export interface StockTransaction {
 // Updated to match Laravel backend Reservation model
 export interface Reservation {
   id: number;
-  item_id: string;
+  item_id: number;
   quantity: number;
   job_order_number: string;
   status: 'pending' | 'approved' | 'rejected' | 'completed' | 'cancelled';
@@ -67,7 +67,7 @@ export interface Reservation {
 // Updated to match Laravel backend low stock detection
 export interface LowStockAlert {
   id: number;
-  item_id: string;
+  item_id: number;
   item_name: string;
   current_stock: number;
   reorder_level: number;
@@ -105,7 +105,7 @@ export interface DashboardAnalytics {
 }
 
 export interface UsageReport {
-  partId: string;
+  partId: number;
   partNumber: string;
   description: string;
   category: string;
@@ -134,7 +134,7 @@ export interface AuditLog {
 // Enhanced transaction type with audit information
 export interface AuditTransaction {
   id: string | number; // Allow both string and number for compatibility
-  item_id: string;
+  item_id: number;
   transaction_type: 'procurement' | 'sale' | 'return' | 'damage' | 'adjustment';
   quantity: number;
   balance_after: number;
@@ -148,7 +148,7 @@ export interface AuditTransaction {
   reason?: string;
   timestamp: string;
   type: string; // Maps to transaction_type for display
-  partId: string;
+  partId: number;
   // Optional inventory relationship
   inventory_item?: InventoryItem;
 }

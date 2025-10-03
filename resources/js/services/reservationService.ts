@@ -15,7 +15,7 @@ export interface ReservationFilters {
 }
 
 export interface NewReservation {
-    item_id: string;
+    item_id: number;
     quantity: number;
     job_order_number: string;
     requested_by: string;
@@ -24,7 +24,7 @@ export interface NewReservation {
 }
 
 export interface ReservationItem {
-    item_id: string;
+    item_id: number;
     quantity: number;
 }
 

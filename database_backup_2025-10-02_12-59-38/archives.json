@@ -1,0 +1,30 @@
+[
+    {
+        "archive_id": 1,
+        "entity_type": "inventory",
+        "entity_id": 1,
+        "action": "created",
+        "old_data": null,
+        "new_data": "{\"item_id\":\"BRK-PAD-001\",\"stock\":25}",
+        "user_id": "1",
+        "reference_number": null,
+        "notes": "Initial inventory item creation",
+        "archived_date": "2025-09-01 07:32:50",
+        "created_at": "2025-10-01 07:32:50",
+        "updated_at": "2025-10-01 07:32:50"
+    },
+    {
+        "archive_id": 2,
+        "entity_type": "inventory",
+        "entity_id": 1,
+        "action": "sale",
+        "old_data": "{\"stock\":27}",
+        "new_data": "{\"stock\":25}",
+        "user_id": null,
+        "reference_number": "POS-20241001-123",
+        "notes": "Stock deduction for sale",
+        "archived_date": "2025-09-30 07:32:50",
+        "created_at": "2025-10-01 07:32:50",
+        "updated_at": "2025-10-01 07:32:50"
+    }
+]

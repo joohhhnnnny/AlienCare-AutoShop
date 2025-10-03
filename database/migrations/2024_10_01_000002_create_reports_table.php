@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('reports', function (Blueprint $table) {
-            $table->id('report_id');
+            $table->id(); // Auto-incrementing primary key
             $table->enum('report_type', [
                 'daily_usage',
                 'monthly_procurement',

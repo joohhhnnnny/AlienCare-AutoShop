@@ -6,7 +6,7 @@
 import { ApiResponse, PaginatedResponse } from '@/lib/api';
 import { InventoryFilters, inventoryService, NewInventoryItem, StockOperation } from '@/services/inventoryService';
 import { DashboardAnalytics, InventoryItem, StockTransaction } from '@/types/inventory';
-import { dispatchInventoryUpdate, dispatchStockTransaction } from '@/utils/inventoryEvents';
+import { dispatchInventoryUpdate, dispatchStockTransaction, inventoryEvents } from '@/utils/inventoryEvents';
 import { useCallback, useEffect, useState } from 'react';
 
 // Hook for inventory items with pagination and filtering
@@ -80,16 +80,39 @@ export function useInventoryItems(initialFilters: InventoryFilters = {}) {
             await fetchInventory(); // Refresh data
 
             // Dispatch event for real-time updates
-            dispatchInventoryUpdate(item.item_id, 'created', {
+            if (item.item_id) {
+                dispatchInventoryUpdate(item.item_id, 'created', {
+                    item_name: item.item_name,
+                    category: item.category,
+                    stock: item.stock
+                });
+            }
+
+            return { success: true, data: response.data };
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to create item';
+            setError(errorMessage);
+            return { success: false, error: errorMessage };
+        }
+    }, [fetchInventory]);
+
+    const updateItem = useCallback(async (itemId: number, item: Partial<NewInventoryItem>) => {
+        try {
+            const response = await inventoryService.updateInventoryItem(itemId, item);
+            await fetchInventory(); // Refresh data
+
+            // Dispatch event for real-time updates
+            dispatchInventoryUpdate(itemId, 'updated', {
                 item_name: item.item_name,
                 category: item.category,
                 stock: item.stock
             });
 
-            return true;
+            return { success: true, data: response.data };
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to create item');
-            return false;
+            const errorMessage = err instanceof Error ? err.message : 'Failed to update item';
+            setError(errorMessage);
+            return { success: false, error: errorMessage };
         }
     }, [fetchInventory]);
 
@@ -103,6 +126,7 @@ export function useInventoryItems(initialFilters: InventoryFilters = {}) {
         addStock,
         deductStock,
         createItem,
+        updateItem,
         clearError: () => setError(null),
     };
 }
@@ -200,6 +224,30 @@ export function useDashboardAnalytics() {
 
     useEffect(() => {
         fetchAnalytics();
+    }, [fetchAnalytics]);
+
+    // Listen for inventory events to auto-refresh analytics
+    useEffect(() => {
+        const cleanup = inventoryEvents.listenMultiple(
+            ['inventory-updated', 'stock-transaction', 'reservation-updated'],
+            () => {
+                // Debounce the refresh to avoid too many API calls
+                setTimeout(() => {
+                    fetchAnalytics();
+                }, 1000);
+            }
+        );
+
+        return cleanup;
+    }, [fetchAnalytics]);
+
+    // Also add an interval for periodic refresh (every 30 seconds)
+    useEffect(() => {
+        const interval = setInterval(() => {
+            fetchAnalytics();
+        }, 30000); // 30 seconds
+
+        return () => clearInterval(interval);
     }, [fetchAnalytics]);
 
     return {

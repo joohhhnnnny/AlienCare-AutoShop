@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('alerts', function (Blueprint $table) {
             $table->id();
-            $table->string('item_id');
+            $table->unsignedBigInteger('item_id'); // Foreign key to inventories.item_id
             $table->string('item_name');
             $table->integer('current_stock');
             $table->integer('reorder_level');
@@ -26,6 +26,9 @@ return new class extends Migration
             $table->string('acknowledged_by')->nullable();
             $table->timestamp('acknowledged_at')->nullable();
             $table->timestamps();
+
+            // Foreign key
+            $table->foreign('item_id')->references('item_id')->on('inventories')->onDelete('cascade');
 
             // Indexes
             $table->index(['item_id', 'acknowledged']);

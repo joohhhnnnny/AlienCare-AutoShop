@@ -1,0 +1,58 @@
+[
+    {
+        "cid": 0,
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt_value": null,
+        "pk": 1
+    },
+    {
+        "cid": 1,
+        "name": "queue",
+        "type": "varchar",
+        "notnull": 1,
+        "dflt_value": null,
+        "pk": 0
+    },
+    {
+        "cid": 2,
+        "name": "payload",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt_value": null,
+        "pk": 0
+    },
+    {
+        "cid": 3,
+        "name": "attempts",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt_value": null,
+        "pk": 0
+    },
+    {
+        "cid": 4,
+        "name": "reserved_at",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt_value": null,
+        "pk": 0
+    },
+    {
+        "cid": 5,
+        "name": "available_at",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt_value": null,
+        "pk": 0
+    },
+    {
+        "cid": 6,
+        "name": "created_at",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt_value": null,
+        "pk": 0
+    }
+]

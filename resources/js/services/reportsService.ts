@@ -113,7 +113,7 @@ class ReportsService {
             active_categories: number;
         };
         usage_by_item: Array<{
-            item_id: string;
+            item_id: number;
             item_name: string;
             part_number: string;
             description: string;
@@ -130,7 +130,7 @@ class ReportsService {
             item_count: number;
         }>;
         top_consumed_items: Array<{
-            item_id: string;
+            item_id: number;
             item_name: string;
             part_number: string;
             description: string;
@@ -158,7 +158,7 @@ class ReportsService {
                 active_categories: number;
             };
             usage_by_item: Array<{
-                item_id: string;
+                item_id: number;
                 item_name: string;
                 part_number: string;
                 description: string;
@@ -175,7 +175,7 @@ class ReportsService {
                 item_count: number;
             }>;
             top_consumed_items: Array<{
-                item_id: string;
+                item_id: number;
                 item_name: string;
                 part_number: string;
                 description: string;

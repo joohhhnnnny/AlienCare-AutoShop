@@ -1,8 +1,9 @@
-import { AlertTriangle, CheckCircle, ChevronDown, ChevronRight, Clock, Package, Plus, RefreshCw, Trash2, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle, ChevronDown, ChevronRight, Clock, Loader2, Package, Plus, RefreshCw, Trash2, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useInventoryItems } from "../../hooks/useInventory";
 import { useReservations } from "../../hooks/useReservations";
 import { Reservation } from "../../types/inventory";
+import { Alert, AlertDescription } from "../ui/alert";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
@@ -25,14 +26,17 @@ export function ReservationPanel() {
     rejectReservation,
     completeReservation,
     cancelReservation,
-    updateFilters
-  } = useReservations();
+    updateFilters,
+    refresh: refreshReservations
+  } = useReservations({ per_page: 50 }); // Request more items to ensure we see pending reservations
 
   const { data: inventoryData, loading: inventoryLoading } = useInventoryItems();
 
   // Local state for UI
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [createReservationError, setCreateReservationError] = useState<string | null>(null);
+  const [isCreatingReservation, setIsCreatingReservation] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({
     pending: false, // Always start expanded for highest priority
     approved: false, // Keep expanded for active work
@@ -50,7 +54,12 @@ export function ReservationPanel() {
   });
 
   // Extract data from responses with proper type checking
-  const reservations = Array.isArray(reservationsData?.data) ? reservationsData.data : [];
+  const reservations: any[] = Array.isArray(reservationsData?.data) ? reservationsData.data : [];
+  console.log('Current reservations data:', reservations.length, 'total reservations');
+  console.log('Raw reservationsData:', reservationsData);
+  console.log('Reservation statuses:', reservations.map(r => r.status));
+  console.log('Pending reservations:', reservations.filter(r => r.status === 'pending').length);
+
   const inventoryItems = Array.isArray(inventoryData?.data?.data) ? inventoryData.data.data : [];
   const loading = reservationsLoading || inventoryLoading;
 
@@ -171,8 +180,10 @@ export function ReservationPanel() {
 
   // Auto-expand pending reservations if they exist
   const checkAndExpandPendingReservations = () => {
-    const pendingReservations = reservations.filter(r => r.status === 'pending');
+    const pendingReservations = reservations.filter((r: any) => r.status === 'pending');
+    console.log('Checking pending reservations:', pendingReservations.length, 'found');
     if (pendingReservations.length > 0 && collapsedGroups.pending) {
+      console.log('Auto-expanding pending reservations section');
       setCollapsedGroups(prev => ({
         ...prev,
         pending: false // Ensure pending is always visible when they exist
@@ -199,55 +210,126 @@ export function ReservationPanel() {
     const resetReservationForm = () => {
     setReservationItems([{ item_id: '', quantity: 1 }]);
     setReservationDetails({ job_order_number: '', requested_by: '', notes: '' });
+    setCreateReservationError(null);
   };
 
   const handleCreateReservation = async () => {
+    // Clear previous errors
+    setCreateReservationError(null);
+    setIsCreatingReservation(true);
+
     try {
-      setActionLoading('create');
+      // Validate required fields
+      if (!reservationDetails.job_order_number.trim()) {
+        setCreateReservationError("Job Order Number is required");
+        return;
+      }
+
+      if (!reservationDetails.requested_by.trim()) {
+        setCreateReservationError("Requested By field is required");
+        return;
+      }
 
       // Validate and convert items to proper format
       const validItems = reservationItems
         .filter(item => item.item_id && (typeof item.quantity === 'number' ? item.quantity > 0 : Number(item.quantity) > 0))
         .map(item => ({
-          item_id: item.item_id,
+          item_id: typeof item.item_id === 'number' ? item.item_id : parseInt(String(item.item_id)), // Convert to number for API
           quantity: typeof item.quantity === 'number' ? item.quantity : Number(item.quantity)
         }));
 
-      console.log('Valid items for creation:', validItems);
-
       if (validItems.length === 0) {
-        alert('Please add at least one valid item');
+        setCreateReservationError("Please add at least one valid item with a quantity greater than 0");
         return;
       }
 
+      // Check for duplicate items
+      const itemIds = validItems.map(item => item.item_id);
+      const duplicates = itemIds.filter((item, index) => itemIds.indexOf(item) !== index);
+      if (duplicates.length > 0) {
+        setCreateReservationError(`Duplicate items found. Please remove duplicates.`);
+        return;
+      }
+
+      // Enhanced validation with stock checking and quantity limits
+      const validationErrors: string[] = [];
+
+      for (const item of validItems) {
+        const inventoryItem = inventoryItems.find(inv => String(inv.item_id) === String(item.item_id));
+
+        if (!inventoryItem) {
+          validationErrors.push(`Item with ID ${item.item_id} not found in inventory`);
+          continue;
+        }
+
+        // Check for negative quantities
+        if (item.quantity <= 0) {
+          validationErrors.push(`${inventoryItem.item_name}: Quantity must be greater than 0`);
+          continue;
+        }
+
+        // Check quantity limit (max 100 per item)
+        if (item.quantity > 100) {
+          validationErrors.push(`${inventoryItem.item_name}: Maximum quantity per reservation is 100`);
+          continue;
+        }
+
+        // Check stock availability
+        if (item.quantity > inventoryItem.stock) {
+          validationErrors.push(`${inventoryItem.item_name}: Cannot reserve ${item.quantity} items (only ${inventoryItem.stock} in stock)`);
+          continue;
+        }
+
+        // Warning for high quantity reservations (more than 50% of stock)
+        const stockPercentage = (item.quantity / inventoryItem.stock) * 100;
+        if (stockPercentage > 50 && inventoryItem.stock > 1) {
+          validationErrors.push(`${inventoryItem.item_name}: Reserving ${item.quantity} of ${inventoryItem.stock} items (${Math.round(stockPercentage)}% of stock). Consider reducing quantity.`);
+        }
+      }
+
+      if (validationErrors.length > 0) {
+        setCreateReservationError(validationErrors.join(' | '));
+        return;
+      }
+
+      let result;
       if (validItems.length === 1) {
         // Create single reservation
-        await createReservation({
+        result = await createReservation({
           item_id: validItems[0].item_id,
           quantity: validItems[0].quantity,
-          job_order_number: reservationDetails.job_order_number,
-          requested_by: reservationDetails.requested_by,
-          notes: reservationDetails.notes
+          job_order_number: reservationDetails.job_order_number.trim(),
+          requested_by: reservationDetails.requested_by.trim(),
+          notes: reservationDetails.notes.trim()
         });
       } else {
         // Create multiple reservations
-        await createMultipleReservations({
-          job_order_number: reservationDetails.job_order_number,
-          requested_by: reservationDetails.requested_by,
-          notes: reservationDetails.notes,
+        result = await createMultipleReservations({
+          job_order_number: reservationDetails.job_order_number.trim(),
+          requested_by: reservationDetails.requested_by.trim(),
+          notes: reservationDetails.notes.trim(),
           items: validItems
         });
       }
 
-      // Reset form
-      resetReservationForm();
-      setIsDialogOpen(false);
-      alert('Reservation(s) created successfully');
+      if (result.success) {
+        // Reset form
+        resetReservationForm();
+        setIsDialogOpen(false);
+
+        // Force immediate refresh of reservations
+        refreshReservations();
+
+        // You could show a success toast here instead of alert
+        alert(`Reservation${validItems.length > 1 ? 's' : ''} created successfully`);
+      } else {
+        setCreateReservationError(result.error || 'Failed to create reservation. Please try again.');
+      }
     } catch (error) {
       console.error('Error creating reservation:', error);
-      alert('Failed to create reservation: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      setCreateReservationError(error instanceof Error ? error.message : 'An unexpected error occurred. Please try again.');
     } finally {
-      setActionLoading(null);
+      setIsCreatingReservation(false);
     }
   };
 
@@ -275,6 +357,12 @@ export function ReservationPanel() {
 
   const updateReservationItem = (index: number, field: 'item_id' | 'quantity', value: string | number) => {
     console.log('Updating reservation item:', { index, field, value, type: typeof value });
+
+    // Clear error when user makes changes
+    if (createReservationError) {
+      setCreateReservationError(null);
+    }
+
     setReservationItems(prev => {
       const newItems = prev.map((item, i) => {
         if (i === index) {
@@ -282,8 +370,26 @@ export function ReservationPanel() {
             // Handle quantity field properly - allow empty string or convert to number
             return { ...item, quantity: value };
           } else {
-            // Handle item_id field
-            return { ...item, item_id: String(value) };
+            // Handle item_id field - also validate stock when item is selected
+            const newItem = { ...item, item_id: String(value) };
+
+            // If selecting a new item, check its stock and current quantity
+            if (value) {
+              const selectedInventoryItem = inventoryItems.find(inv => String(inv.item_id) === String(value));
+              if (selectedInventoryItem) {
+                const currentQty = typeof item.quantity === 'number' ? item.quantity : parseInt(String(item.quantity)) || 1;
+
+                // Auto-adjust quantity if it exceeds stock
+                if (currentQty > selectedInventoryItem.stock) {
+                  newItem.quantity = Math.min(selectedInventoryItem.stock, 100);
+                  if (selectedInventoryItem.stock === 0) {
+                    setCreateReservationError(`${selectedInventoryItem.item_name} is out of stock`);
+                  }
+                }
+              }
+            }
+
+            return newItem;
           }
         }
         return item;
@@ -294,8 +400,13 @@ export function ReservationPanel() {
   };  const handleApproveReservation = async (reservationId: number) => {
     try {
       setActionLoading(`approve-${reservationId}`);
-      await approveReservation(reservationId, { approved_by: 'Current User' });
-      alert('Reservation approved successfully');
+      const result = await approveReservation(reservationId, { approved_by: 'Current User' });
+
+      if (result.success) {
+        alert('Reservation approved successfully');
+      } else {
+        alert('Failed to approve reservation: ' + (result.error || 'Unknown error'));
+      }
     } catch (error) {
       alert('Failed to approve reservation: ' + (error instanceof Error ? error.message : 'Unknown error'));
     } finally {
@@ -306,11 +417,16 @@ export function ReservationPanel() {
   const handleRejectReservation = async (reservationId: number) => {
     try {
       setActionLoading(`reject-${reservationId}`);
-      await rejectReservation(reservationId, {
+      const result = await rejectReservation(reservationId, {
         approved_by: 'Current User',
         notes: 'Rejected by user'
       });
-      alert('Reservation rejected successfully');
+
+      if (result.success) {
+        alert('Reservation rejected successfully');
+      } else {
+        alert('Failed to reject reservation: ' + (result.error || 'Unknown error'));
+      }
     } catch (error) {
       alert('Failed to reject reservation: ' + (error instanceof Error ? error.message : 'Unknown error'));
     } finally {
@@ -321,10 +437,15 @@ export function ReservationPanel() {
   const handleCompleteReservation = async (reservationId: number) => {
     try {
       setActionLoading(`complete-${reservationId}`);
-      await completeReservation(reservationId, {
+      const result = await completeReservation(reservationId, {
         completed_by: 'Current User'
       });
-      alert('Reservation completed successfully');
+
+      if (result.success) {
+        alert('Reservation completed successfully');
+      } else {
+        alert('Failed to complete reservation: ' + (result.error || 'Unknown error'));
+      }
     } catch (error) {
       alert('Failed to complete reservation: ' + (error instanceof Error ? error.message : 'Unknown error'));
     } finally {
@@ -335,11 +456,16 @@ export function ReservationPanel() {
   const handleCancelReservation = async (reservationId: number) => {
     try {
       setActionLoading(`cancel-${reservationId}`);
-      await cancelReservation(reservationId, {
+      const result = await cancelReservation(reservationId, {
         cancelled_by: 'Current User',
         reason: 'Cancelled by user'
       });
-      alert('Reservation cancelled successfully');
+
+      if (result.success) {
+        alert('Reservation cancelled successfully');
+      } else {
+        alert('Failed to cancel reservation: ' + (result.error || 'Unknown error'));
+      }
     } catch (error) {
       alert('Failed to cancel reservation: ' + (error instanceof Error ? error.message : 'Unknown error'));
     } finally {
@@ -431,7 +557,10 @@ export function ReservationPanel() {
                   <Input
                     id="jobOrder"
                     value={reservationDetails.job_order_number}
-                    onChange={(e) => setReservationDetails(prev => ({ ...prev, job_order_number: e.target.value }))}
+                    onChange={(e) => {
+                      setReservationDetails(prev => ({ ...prev, job_order_number: e.target.value }));
+                      if (createReservationError) setCreateReservationError(null);
+                    }}
                     placeholder="JO-2024-001"
                     className="bg-input border-border text-foreground"
                   />
@@ -441,7 +570,10 @@ export function ReservationPanel() {
                   <Input
                     id="requestedBy"
                     value={reservationDetails.requested_by}
-                    onChange={(e) => setReservationDetails(prev => ({ ...prev, requested_by: e.target.value }))}
+                    onChange={(e) => {
+                      setReservationDetails(prev => ({ ...prev, requested_by: e.target.value }));
+                      if (createReservationError) setCreateReservationError(null);
+                    }}
                     placeholder="Technician Name"
                     className="bg-input border-border text-foreground"
                   />
@@ -451,7 +583,10 @@ export function ReservationPanel() {
                   <Input
                     id="notes"
                     value={reservationDetails.notes}
-                    onChange={(e) => setReservationDetails(prev => ({ ...prev, notes: e.target.value }))}
+                    onChange={(e) => {
+                      setReservationDetails(prev => ({ ...prev, notes: e.target.value }));
+                      if (createReservationError) setCreateReservationError(null);
+                    }}
                     placeholder="Additional notes (optional)"
                     className="bg-input border-border text-foreground"
                   />
@@ -478,11 +613,17 @@ export function ReservationPanel() {
                         <div className="flex-1">
                           <Label className="text-xs text-muted-foreground">Part</Label>
                           <Select
-                            value={item.item_id}
+                            value={String(item.item_id)} // Convert to string for Select component
                             onValueChange={(value) => updateReservationItem(index, 'item_id', value)}
                           >
                             <SelectTrigger className="h-8 bg-input border-border text-foreground">
-                              <SelectValue placeholder="Select part" />
+                              <SelectValue placeholder="Select part">
+                                {(() => {
+                                  if (!item.item_id) return "Select part";
+                                  const selectedItem = inventoryItems.find(inv => String(inv.item_id) === String(item.item_id));
+                                  return selectedItem ? `${selectedItem.item_name} (Stock: ${selectedItem.stock})` : "Select part";
+                                })()}
+                              </SelectValue>
                             </SelectTrigger>
                             <SelectContent className="bg-popover border-border max-h-64 overflow-y-auto">
                               {(() => {
@@ -490,13 +631,39 @@ export function ReservationPanel() {
                                   return <SelectItem value="" disabled>No items available</SelectItem>;
                                 }
 
-                                return inventoryItems.map((inventoryItem, itemIndex) => {
+                                // Sort items: available items first (stock > 0), then by name
+                                const sortedItems = [...inventoryItems].sort((a, b) => {
+                                  // First sort by stock availability
+                                  if (a.stock > 0 && b.stock === 0) return -1;
+                                  if (a.stock === 0 && b.stock > 0) return 1;
+
+                                  // Then sort by name
+                                  return a.item_name.localeCompare(b.item_name);
+                                });
+
+                                return sortedItems.map((inventoryItem) => {
                                   if (!inventoryItem || !inventoryItem.item_id) {
                                     return null;
                                   }
+
+                                  const isOutOfStock = inventoryItem.stock === 0;
+                                  const isLowStock = inventoryItem.stock > 0 && inventoryItem.stock <= 5;
+
                                   return (
-                                    <SelectItem key={inventoryItem.item_id} value={inventoryItem.item_id}>
-                                      {inventoryItem.item_id} - {inventoryItem.item_name} (Stock: {inventoryItem.stock})
+                                    <SelectItem
+                                      key={String(inventoryItem.item_id)}
+                                      value={String(inventoryItem.item_id)}
+                                      disabled={isOutOfStock}
+                                      className={`${isOutOfStock ? 'opacity-50 cursor-not-allowed' : ''} ${isLowStock ? 'text-orange-600' : ''}`}
+                                    >
+                                      <div className="flex items-center justify-between w-full">
+                                        <span className={isOutOfStock ? 'line-through' : ''}>
+                                          {inventoryItem.item_name}
+                                        </span>
+                                        <span className={`ml-2 text-xs ${isOutOfStock ? 'text-red-500' : isLowStock ? 'text-orange-500' : 'text-muted-foreground'}`}>
+                                          {isOutOfStock ? 'Out of Stock' : `Stock: ${inventoryItem.stock}`}
+                                        </span>
+                                      </div>
                                     </SelectItem>
                                   );
                                 }).filter(Boolean);
@@ -509,17 +676,22 @@ export function ReservationPanel() {
                           <Input
                             type="number"
                             min="1"
+                            max="100"
                             value={item.quantity === '' ? '' : String(item.quantity)}
                             onChange={(e) => {
                               console.log('Quantity input change:', e.target.value);
                               const value = e.target.value;
-                              // Allow empty string during editing
+
+                              // Prevent negative numbers and values over 100
                               if (value === '') {
                                 updateReservationItem(index, 'quantity', '');
                               } else {
                                 const numValue = parseInt(value);
-                                if (!isNaN(numValue) && numValue > 0) {
+                                if (!isNaN(numValue) && numValue >= 1 && numValue <= 100) {
                                   updateReservationItem(index, 'quantity', numValue);
+                                } else if (numValue > 100) {
+                                  updateReservationItem(index, 'quantity', 100);
+                                  setCreateReservationError("Maximum quantity per item is 100");
                                 }
                               }
                             }}
@@ -528,6 +700,28 @@ export function ReservationPanel() {
                               const value = e.target.value;
                               if (value === '' || isNaN(parseInt(value)) || parseInt(value) < 1) {
                                 updateReservationItem(index, 'quantity', 1);
+                              }
+
+                              // Additional stock validation on blur
+                              if (item.item_id) {
+                                const selectedItem = inventoryItems.find(inv => String(inv.item_id) === String(item.item_id));
+                                if (selectedItem) {
+                                  const qty = parseInt(value) || 1;
+                                  if (qty > selectedItem.stock) {
+                                    setCreateReservationError(`Cannot reserve ${qty} of ${selectedItem.item_name} (only ${selectedItem.stock} in stock)`);
+                                  } else {
+                                    // Clear stock-related errors if quantity is valid
+                                    if (createReservationError?.includes('only') && createReservationError?.includes('in stock')) {
+                                      setCreateReservationError(null);
+                                    }
+                                  }
+                                }
+                              }
+                            }}
+                            onKeyDown={(e) => {
+                              // Prevent entering negative sign, plus sign, decimal point, and 'e' (scientific notation)
+                              if (['-', '+', '.', 'e', 'E'].includes(e.key)) {
+                                e.preventDefault();
                               }
                             }}
                             className="h-8 bg-input border-border text-foreground"
@@ -549,15 +743,24 @@ export function ReservationPanel() {
                   </div>
                 </div>
 
+                {createReservationError && (
+                  <Alert variant="destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertDescription>
+                      {createReservationError}
+                    </AlertDescription>
+                  </Alert>
+                )}
+
                 <Button
                   onClick={handleCreateReservation}
-                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
-                  disabled={actionLoading === 'create'}
+                  disabled={isCreatingReservation}
+                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                 >
-                  {actionLoading === 'create' ? (
+                  {isCreatingReservation ? (
                     <>
-                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                      Creating...
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Creating Reservation{reservationItems.filter(item => item.item_id).length > 1 ? 's' : ''}...
                     </>
                   ) : (
                     `Create Reservation${reservationItems.filter(item => item.item_id).length > 1 ? 's' : ''}`

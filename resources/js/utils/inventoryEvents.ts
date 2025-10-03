@@ -74,7 +74,7 @@ class InventoryEventDispatcher {
 export const inventoryEvents = new InventoryEventDispatcher();
 
 // Convenience functions for common events
-export const dispatchInventoryUpdate = (itemId: string, operation: string, data?: any) => {
+export const dispatchInventoryUpdate = (itemId: number, operation: string, data?: any) => {
   inventoryEvents.dispatch('inventory-updated', { itemId, operation, ...data });
 };
 
@@ -82,6 +82,6 @@ export const dispatchReservationUpdate = (reservationId: string, status: string,
   inventoryEvents.dispatch('reservation-updated', { reservationId, status, ...data });
 };
 
-export const dispatchStockTransaction = (itemId: string, transactionType: string, quantity: number, data?: any) => {
+export const dispatchStockTransaction = (itemId: number, transactionType: string, quantity: number, data?: any) => {
   inventoryEvents.dispatch('stock-transaction', { itemId, transactionType, quantity, ...data });
 };

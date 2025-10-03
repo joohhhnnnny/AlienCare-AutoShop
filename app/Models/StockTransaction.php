@@ -10,7 +10,7 @@ class StockTransaction extends Model
 {
     use HasFactory;
 
-    protected $primaryKey = 'transaction_id';
+    // Using default 'id' primary key (auto-incrementing)
 
     protected $fillable = [
         'item_id',

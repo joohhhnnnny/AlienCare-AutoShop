@@ -56,7 +56,6 @@ class InventoryController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'item_id' => 'required|string|unique:inventories,item_id',
             'item_name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'category' => 'required|string|max:100',
@@ -77,7 +76,10 @@ class InventoryController extends Controller
         try {
             DB::beginTransaction();
 
-            $inventory = Inventory::create($request->all());
+            $inventory = Inventory::create($request->only([
+                'item_name', 'description', 'category', 'stock',
+                'reorder_level', 'unit_price', 'supplier', 'location'
+            ]));
 
             // Log initial stock if any
             if ($inventory->stock > 0) {
@@ -114,9 +116,170 @@ class InventoryController extends Controller
     }
 
     /**
+     * Display the specified inventory item.
+     */
+    public function show(int $id): JsonResponse
+    {
+        try {
+            $inventory = Inventory::with(['reservations', 'stockTransactions'])
+                ->where('item_id', $id)
+                ->first();
+
+            if (!$inventory) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Inventory item not found'
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => $inventory
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch inventory item: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Update the specified inventory item.
+     */
+    public function update(Request $request, int $id): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'item_name' => 'sometimes|required|string|max:255',
+            'description' => 'nullable|string',
+            'category' => 'sometimes|required|string|max:255',
+            'stock' => 'sometimes|required|integer|min:0',
+            'reorder_level' => 'sometimes|required|integer|min:0',
+            'unit_price' => 'sometimes|required|numeric|min:0',
+            'supplier' => 'nullable|string|max:255',
+            'location' => 'nullable|string|max:255',
+            'status' => 'sometimes|required|in:active,inactive,discontinued',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $inventory = Inventory::where('item_id', $id)->first();
+
+            if (!$inventory) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Inventory item not found'
+                ], 404);
+            }
+
+            $originalStock = $inventory->stock;
+            $newStock = $request->input('stock', $originalStock);
+
+            // Update inventory item
+            $inventory->update($request->only([
+                'item_name', 'description', 'category', 'stock',
+                'reorder_level', 'unit_price', 'supplier', 'location', 'status'
+            ]));
+
+            // Log stock transaction if stock changed
+            if ($originalStock != $newStock) {
+                $difference = $newStock - $originalStock;
+                $transactionType = $difference > 0 ? 'adjustment_in' : 'adjustment_out';
+
+                StockTransaction::create([
+                    'item_id' => $inventory->item_id,
+                    'transaction_type' => $transactionType,
+                    'quantity' => abs($difference),
+                    'previous_stock' => $originalStock,
+                    'new_stock' => $newStock,
+                    'reference_number' => 'MANUAL_ADJUSTMENT',
+                    'notes' => 'Stock adjusted via inventory update',
+                    'created_by' => Auth::check() ? Auth::user()->name : 'System'
+                ]);
+
+                event(new StockUpdated($inventory, 'updated'));
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'data' => $inventory->fresh(),
+                'message' => 'Inventory item updated successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollback();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update inventory item: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Remove the specified inventory item.
+     */
+    public function destroy(int $id): JsonResponse
+    {
+        try {
+            DB::beginTransaction();
+
+            $inventory = Inventory::where('item_id', $id)->first();
+
+            if (!$inventory) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Inventory item not found'
+                ], 404);
+            }
+
+            // Check if there are active reservations
+            $activeReservations = $inventory->reservations()
+                ->whereIn('status', ['pending', 'approved'])
+                ->count();
+
+            if ($activeReservations > 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot delete item with active reservations'
+                ], 400);
+            }
+
+            // Soft delete by setting status to discontinued
+            $inventory->update(['status' => 'discontinued']);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Inventory item discontinued successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollback();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete inventory item: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Check stock levels for a specific part.
      */
-    public function checkStockLevels(string $itemId, Request $request): JsonResponse
+    public function checkStockLevels(int $itemId, Request $request): JsonResponse
     {
         $requestedQuantity = $request->get('quantity', 1);
 
@@ -153,7 +316,7 @@ class InventoryController extends Controller
     public function addStock(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'item_id' => 'required|string|exists:inventories,item_id',
+            'item_id' => 'required|integer|exists:inventories,item_id',
             'quantity' => 'required|integer|min:1',
             'reference_number' => 'nullable|string',
             'notes' => 'nullable|string',
@@ -219,7 +382,7 @@ class InventoryController extends Controller
     public function deductStock(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'item_id' => 'required|string|exists:inventories,item_id',
+            'item_id' => 'required|integer|exists:inventories,item_id',
             'quantity' => 'required|integer|min:1',
             'reference_number' => 'required|string',
             'notes' => 'nullable|string',
@@ -299,7 +462,7 @@ class InventoryController extends Controller
     public function logReturnDamage(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'item_id' => 'required|string|exists:inventories,item_id',
+            'item_id' => 'required|integer|exists:inventories,item_id',
             'quantity' => 'required|integer|min:1',
             'type' => 'required|in:return,damage',
             'reference_number' => 'nullable|string',

@@ -9,7 +9,7 @@ class Archive extends Model
 {
     use HasFactory;
 
-    protected $primaryKey = 'archive_id';
+    // Using default 'id' primary key (auto-incrementing)
 
     protected $fillable = [
         'entity_type',

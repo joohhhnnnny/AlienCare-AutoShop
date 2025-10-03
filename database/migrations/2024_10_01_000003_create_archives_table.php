@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('archives', function (Blueprint $table) {
-            $table->id('archive_id');
+            $table->id(); // Auto-incrementing primary key
             $table->string('entity_type'); // 'inventory', 'reservation', 'transaction'
             $table->unsignedBigInteger('entity_id');
             $table->string('action'); // 'created', 'updated', 'deleted', 'reserved', 'sold', 'returned'

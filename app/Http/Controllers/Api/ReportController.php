@@ -325,13 +325,12 @@ class ReportController extends Controller
                                                         'item_id' => $transaction->item_id,
                                                         'transaction_type' => $transaction->transaction_type,
                                                         'quantity' => $transaction->quantity,
-                                                        'balance_after' => $transaction->balance_after,
+                                                        'new_stock' => $transaction->new_stock,
                                                         'reference_number' => $transaction->reference_number,
                                                         'notes' => $transaction->notes,
                                                         'created_at' => $transaction->created_at,
                                                         'updated_at' => $transaction->updated_at,
                                                         'inventory_item' => $transaction->inventory ? [
-                                                            'id' => $transaction->inventory->id,
                                                             'item_id' => $transaction->inventory->item_id,
                                                             'item_name' => $transaction->inventory->item_name,
                                                             'category' => $transaction->inventory->category,
@@ -382,14 +381,22 @@ class ReportController extends Controller
     public function getUsageAnalytics(Request $request): JsonResponse
     {
         try {
-            $startDate = Carbon::parse($request->get('start_date', now()->subDays(30)->format('Y-m-d')));
-            $endDate = Carbon::parse($request->get('end_date', now()->format('Y-m-d')));
+            $startDate = Carbon::parse($request->get('start_date', now()->subDays(30)->format('Y-m-d')))->startOfDay();
+            $endDate = Carbon::parse($request->get('end_date', now()->format('Y-m-d')))->endOfDay();
 
             // Get sales/usage transactions within date range
-            $usageTransactions = StockTransaction::where('transaction_type', 'sale')
-                                               ->whereBetween('created_at', [$startDate, $endDate])
-                                               ->with('inventory')
-                                               ->get();
+            // Include 'sale' transactions and only approved reservation transactions (actual consumption)
+            $usageTransactions = StockTransaction::where(function($query) {
+                    $query->where('transaction_type', 'sale')
+                          ->orWhere(function($subQuery) {
+                              $subQuery->where('transaction_type', 'reservation')
+                                       ->where('quantity', '<', 0)
+                                       ->where('notes', 'like', '%Stock deducted for approved reservation%');
+                          });
+                })
+                ->whereBetween('created_at', [$startDate, $endDate])
+                ->with('inventory')
+                ->get();
 
             // Group by item and calculate usage stats
             $usageByItem = $usageTransactions->groupBy('item_id')->map(function ($transactions, $itemId) {

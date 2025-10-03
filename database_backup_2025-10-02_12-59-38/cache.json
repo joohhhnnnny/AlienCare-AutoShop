@@ -1,0 +1,22 @@
+[
+    {
+        "key": "laravel_cache_r.araceana.545985@umindanao.edu.ph|127.0.0.1:timer",
+        "value": "i:1759364776;",
+        "expiration": 1759364776
+    },
+    {
+        "key": "laravel_cache_r.araceana.545985@umindanao.edu.ph|127.0.0.1",
+        "value": "i:1;",
+        "expiration": 1759364776
+    },
+    {
+        "key": "laravel_cache_robertjhonaracena18@gmail.com|127.0.0.1:timer",
+        "value": "i:1759364846;",
+        "expiration": 1759364846
+    },
+    {
+        "key": "laravel_cache_robertjhonaracena18@gmail.com|127.0.0.1",
+        "value": "i:1;",
+        "expiration": 1759364846
+    }
+]

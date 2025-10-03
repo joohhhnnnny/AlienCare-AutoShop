@@ -10,27 +10,32 @@ class Reservation extends Model
 {
     use HasFactory;
 
-    // Use 'reservation_id' as the primary key to match the database schema
-    protected $primaryKey = 'reservation_id';
+    // Using default 'id' primary key (auto-incrementing)
 
     protected $fillable = [
         'item_id',
         'quantity',
         'status',
+        'priority_level',
+        'is_urgent',
         'job_order_number',
         'requested_by',
         'approved_by',
         'requested_date',
         'approved_date',
         'expires_at',
+        'estimated_completion',
         'notes'
     ];
 
     protected $casts = [
         'quantity' => 'integer',
+        'priority_level' => 'integer',
+        'is_urgent' => 'boolean',
         'requested_date' => 'datetime',
         'approved_date' => 'datetime',
         'expires_at' => 'datetime',
+        'estimated_completion' => 'datetime',
     ];
 
     /**

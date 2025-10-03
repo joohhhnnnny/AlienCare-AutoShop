@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { reportsService } from '../services/reportsService';
+import { inventoryEvents } from '../utils/inventoryEvents';
 
 export interface UsageReportData {
-  item_id: string;
+  item_id: number;
   item_name: string;
   part_number: string;
   description: string;
@@ -92,6 +93,30 @@ export function useUsageReports({ reportPeriod = 'daily', selectedCategory = 'al
 
   useEffect(() => {
     fetchUsageData();
+  }, [reportPeriod]);
+
+  // Listen for inventory events to auto-refresh data
+  useEffect(() => {
+    const cleanup = inventoryEvents.listenMultiple(
+      ['inventory-updated', 'stock-transaction', 'reservation-updated'],
+      () => {
+        // Debounce the refresh to avoid too many API calls
+        setTimeout(() => {
+          fetchUsageData();
+        }, 1000);
+      }
+    );
+
+    return cleanup;
+  }, [reportPeriod]);
+
+  // Also add an interval for periodic refresh (every 30 seconds)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchUsageData();
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
   }, [reportPeriod]);
 
   // Filter data by category if needed
