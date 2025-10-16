@@ -1,0 +1,120 @@
+Test Case ID
+Title
+Objective
+Precondition
+Test Steps
+Expected Result
+Actual Result
+Status
+TC_INV_S001
+Check Stock Availability
+Verify Inventory UI returns correct availability info for a SKU
+SKU BRK-12345 exists with qty_on_hand = 15
+1. Login as Inventory Manager.2. Go to Inventory → Search, enter BRK-12345 and Search.3. Open stock details.
+UI shows Available Qty: 15, Reserved: 0, Status: Available. Stock movement history visible.
+
+
+
+
+TC_INV_S002
+Add New Stock (Procurement)
+Verify adding a new SKU/stock creates inventory record, stock movement and audit entry
+New SKU OIL-9999 does not exist
+1. Login as Inventory Manager.2. Inventory → Add Item: fill SKU OIL-9999, qty 50, batch BATCH-1001, supplier SUP-ACME, Save.3. Open stock movements for OIL-9999.
+Confirmation "Stock added". Stock card shows qty 50. Stock movement record of type ADD qty 50 created. Audit entry created.
+
+
+
+
+TC_INV_S003
+Manual Stock Adjustment
+Verify manual adjustments update qty_on_hand, create movement and audit log
+SKU BRK-12345 qty = 15
+1. Login as Inventory Manager.2. Open BRK-12345 → Adjust Stock → enter -2, reason shrinkage, Save.
+UI confirms "Stock updated". New qty displays 13. Movement ADJUST, qty -2 recorded. Audit log created.
+
+
+
+
+TC_INV_S004
+Local Reservation (inventory-only)
+Verify creating reservation updates reserved_qty and reflects on SKU card (simulate JO reservation)
+SKU BRK-12345 qty_on_hand = 13
+1. Login as Inventory Manager (or user allowed to reserve).2. Reservations → Create New: SKU BRK-12345, qty 4, ref RES-TST-001, Save.3. Open SKU card.
+Reservation created with status Reserved. SKU shows reserved_qty 4 and available_qty = 9 (or displays reserved separately depending on UI). Audit entry exists.
+
+
+
+
+TC_INV_S005
+Manual Consumption / Deduct Stock
+Verify manual consumption reduces qty_on_hand, records movement and audit
+SKU BRK-12345 qty_on_hand = 13, reserved_qty = 0
+1. Login as Inventory Manager/Cashier.2. Inventory → Consume/Adjust: SKU BRK-12345, qty -3, reference MANUAL-SALE-001, reason manual_sale, Save.
+UI confirms; new qty = 10. Movement type CONSUME/SALE with reference MANUAL-SALE-001 recorded. Audit entry created.
+
+
+
+
+TC_INV_S006
+Log Damaged / Returned Parts
+Verify returns/damage flow adjusts stock and creates appropriate records
+SKU BRK-12345 qty_on_hand = 10
+1. Login as Inventory Manager.2. Returns/Damages → New: SKU BRK-12345, qty 2, type Returned, reason customer_return, Save.
+Return record saved. Stock qty increases to 12 (assuming returned items are restocked). Movement RETURN recorded. Audit created. (If business rule quarantines, expected behavior must be adjusted.)
+
+
+
+
+TC_INV_S007
+Low-Stock Alert Trigger
+Verify system triggers low-stock alert when qty_on_hand < threshold
+SKU OIL-9999 qty_on_hand = 5; threshold = 10
+1. Login as Inventory Manager.2. Confirm threshold set to 10.3. Consume stock or set qty to 4 so qty < threshold.4. Check Alerts/Notifications.
+Alert for OIL-9999 is created (status TRIGGERED) and visible in Alerts panel / email.
+
+
+
+
+TC_INV_S008
+Daily Usage Report (inventory-only)
+Verify daily usage report aggregates stock movements correctly
+Stock movement activity (ADD, CONSUME, RETURN) exists for test date
+1. Login as Inventory Manager.2. Reports → Daily Usage → Select date (today) → Run.3. Export CSV.
+Report shows totals per SKU: Added, Consumed, Returned for the date. Exported CSV matches UI data.
+
+
+
+
+TC_INV_S009
+Monthly Procurement Report
+Verify monthly procurement report summarizes additions, top SKUs and low-stock trends
+Stock history exists for the month
+1. Login as Inventory Manager.2. Reports → Monthly Procurement → Select month → Run.3. Export report.
+Report shows total procured per SKU, top procured SKUs, and list of low-stock SKUs during the month. Export matches UI.
+
+
+
+
+TC_INV_S010
+End-of-Day Reconciliation (inventory-only)
+Verify reconciliation compares system_on_hand vs physical_count and flags variances
+stock_movements recorded for day; SKU BRK-12345 system_on_hand = 10
+1. Login as Inventory Manager.2. Reconciliation → Start EOD.3. For SKU BRK-12345, input physical count = 9.4. Run reconciliation.
+System shows system_on_hand=10 vs physical_count=9, variance = -1 and flags discrepancy in report. Suggested adjustments present.
+
+
+
+
+TC_INV_S011
+Immutable Audit Log Verification
+Verify critical inventory actions create immutable audit logs (non-editable)
+Inventory actions available (add/adjust/reserve)
+1. Execute an inventory action (e.g., add OIL-9999 qty 50).2. Open Audit Logs and filter by SKU/action.3. Attempt to edit the audit entry via UI/DB (permission check).
+Audit log contains action, user, timestamp, reference and cannot be edited via UI. System enforces immutability.
+
+
+
+
+
+
