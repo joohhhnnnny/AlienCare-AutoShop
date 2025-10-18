@@ -22,8 +22,18 @@ async function testEndpoint(
     if (!resultDiv) return;
 
     const testDiv = document.createElement('div');
-    testDiv.className = 'test-result pending';
-    testDiv.innerHTML = `<h3>${name}</h3><p>Testing ${url}...</p>`;
+    testDiv.className = 'border rounded-md p-3 space-y-2 bg-yellow-50 border-yellow-200 dark:bg-yellow-950 dark:border-yellow-800';
+    
+    const title = document.createElement('h3');
+    title.className = 'font-semibold text-lg';
+    title.textContent = name;
+    
+    const message = document.createElement('p');
+    message.className = 'text-sm text-muted-foreground';
+    message.textContent = `Testing ${url}...`;
+    
+    testDiv.appendChild(title);
+    testDiv.appendChild(message);
     resultDiv.appendChild(testDiv);
 
     try {
@@ -50,23 +60,41 @@ async function testEndpoint(
         const data = await response.json();
 
         if (response.ok) {
-            testDiv.className = 'test-result success';
-            testDiv.innerHTML = `
-                <h3>✅ ${name}</h3>
-                <p><strong>Status:</strong> ${response.status} ${response.statusText}</p>
-                <p><strong>Response:</strong></p>
-                <pre>${JSON.stringify(data, null, 2)}</pre>
-            `;
+            testDiv.className = 'border rounded-md p-3 space-y-2 bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800';
+            
+            title.textContent = `✅ ${name}`;
+            title.className = 'font-semibold text-lg text-green-700 dark:text-green-300';
+            
+            const statusEl = document.createElement('p');
+            statusEl.className = 'text-sm font-medium';
+            statusEl.innerHTML = `<span class="font-bold">Status:</span> ${response.status} ${response.statusText}`;
+            
+            const responseLabel = document.createElement('p');
+            responseLabel.className = 'text-sm font-medium';
+            responseLabel.textContent = 'Response:';
+            
+            const responseData = document.createElement('pre');
+            responseData.className = 'bg-background border border-border rounded p-2 text-xs overflow-auto max-h-48 whitespace-pre-wrap break-words';
+            responseData.textContent = JSON.stringify(data, null, 2);
+            
+            testDiv.appendChild(statusEl);
+            testDiv.appendChild(responseLabel);
+            testDiv.appendChild(responseData);
         } else {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
     } catch (error) {
-        testDiv.className = 'test-result error';
+        testDiv.className = 'border rounded-md p-3 space-y-2 bg-red-50 border-red-200 dark:bg-red-950 dark:border-red-800';
+        
+        title.textContent = `❌ ${name}`;
+        title.className = 'font-semibold text-lg text-red-700 dark:text-red-300';
+        
+        const errorMsg = document.createElement('p');
+        errorMsg.className = 'text-sm font-medium';
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        testDiv.innerHTML = `
-            <h3>❌ ${name}</h3>
-            <p><strong>Error:</strong> ${errorMessage}</p>
-        `;
+        errorMsg.innerHTML = `<span class="font-bold">Error:</span> ${errorMessage}`;
+        
+        testDiv.appendChild(errorMsg);
     }
 }
 

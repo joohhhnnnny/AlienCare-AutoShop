@@ -1,39 +1,46 @@
 /**
  * Reservation Modal Debug Tests
- * Tests API connection, inventory API, and data format
+ * Tests API connection, inventory API, and data format using Tailwind CSS
  */
 
 const BASE_URL = 'http://localhost:8000';
 
-function setResultContent(elementId: string, content: string): void {
-    const resultDiv = document.getElementById(elementId);
-    if (resultDiv) {
-        resultDiv.innerHTML = content;
-    }
+function createResultContent(content: string, status: 'success' | 'error' | 'pending' = 'pending'): string {
+    const statusClassMap = {
+        success: 'text-green-700 dark:text-green-300',
+        error: 'text-red-700 dark:text-red-300',
+        pending: 'text-yellow-700 dark:text-yellow-300'
+    };
+    
+    return `<div class="${statusClassMap[status]}"><pre class="whitespace-pre-wrap break-words">${content}</pre></div>`;
 }
 
-export async function testAPIConnection(): Promise<void> {
-    const resultDiv = 'api-health-result';
-    setResultContent(resultDiv, 'Testing...');
+async function testAPIConnection(): Promise<void> {
+    const resultDiv = document.getElementById('api-health-result');
+    if (!resultDiv) return;
+    
+    resultDiv.textContent = 'Testing...';
 
     try {
         const response = await fetch(`${BASE_URL}/api/health`);
         const data = await response.json();
 
         if (response.ok) {
-            setResultContent(resultDiv, `<span class="success">✓ API Health Check Passed</span>\n${JSON.stringify(data, null, 2)}`);
+            resultDiv.innerHTML = createResultContent(`✓ API Health Check Passed\n\n${JSON.stringify(data, null, 2)}`, 'success');
         } else {
-            setResultContent(resultDiv, `<span class="error">✗ API Health Check Failed</span>\nStatus: ${response.status}\n${JSON.stringify(data, null, 2)}`);
+            resultDiv.innerHTML = createResultContent(`✗ API Health Check Failed\nStatus: ${response.status}\n\n${JSON.stringify(data, null, 2)}`, 'error');
         }
     } catch (error) {
         const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-        setResultContent(resultDiv, `<span class="error">✗ Connection Error</span>\n${errorMsg}`);
+        resultDiv.innerHTML = createResultContent(`✗ Connection Error\n${errorMsg}`, 'error');
     }
 }
 
-export async function testInventoryAPI(): Promise<void> {
-    const resultDiv = 'inventory-api-result';
-    setResultContent(resultDiv, 'Testing...');
+async function testInventoryAPI(): Promise<void> {
+    const resultDiv = document.getElementById('inventory-api-result');
+    if (!resultDiv) return;
+    
+    resultDiv.textContent = 'Testing...';
 
     try {
         const response = await fetch(`${BASE_URL}/api/inventory`);
@@ -50,28 +57,32 @@ export async function testInventoryAPI(): Promise<void> {
                     })
                     .join('\n');
 
-                setResultContent(resultDiv, `<span class="success">✓ Inventory API Working</span>
+                const content = `✓ Inventory API Working
 Items Found: ${inventoryItems.length}
 Sample Items:
 ${itemList}
 
 Full Response Structure:
-${JSON.stringify(data, null, 2)}`);
+${JSON.stringify(data, null, 2)}`;
+                
+                resultDiv.innerHTML = createResultContent(content, 'success');
             } else {
                 throw new Error('Invalid response format');
             }
         } else {
-            setResultContent(resultDiv, `<span class="error">✗ Inventory API Failed</span>\nStatus: ${response.status}\n${JSON.stringify(data, null, 2)}`);
+            resultDiv.innerHTML = createResultContent(`✗ Inventory API Failed\nStatus: ${response.status}\n\n${JSON.stringify(data, null, 2)}`, 'error');
         }
     } catch (error) {
         const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-        setResultContent(resultDiv, `<span class="error">✗ Connection Error</span>\n${errorMsg}`);
+        resultDiv.innerHTML = createResultContent(`✗ Connection Error\n${errorMsg}`, 'error');
     }
 }
 
-export async function testDataFormat(): Promise<void> {
-    const resultDiv = 'data-format-result';
-    setResultContent(resultDiv, 'Testing...');
+async function testDataFormat(): Promise<void> {
+    const resultDiv = document.getElementById('data-format-result');
+    if (!resultDiv) return;
+    
+    resultDiv.textContent = 'Testing...';
 
     try {
         const response = await fetch(`${BASE_URL}/api/inventory`);
@@ -88,7 +99,7 @@ export async function testDataFormat(): Promise<void> {
                 })
                 .join('\n');
 
-            setResultContent(resultDiv, `<span class="success">✓ Data Format Analysis</span>
+            const content = `✓ Data Format Analysis
 Original Response Type: ${typeof data}
 data.data exists: ${!!data.data}
 data.data.data exists: ${!!data.data?.data}
@@ -100,13 +111,15 @@ Frontend Extraction Result:
 - inventoryItems length: ${inventoryItems.length}
 
 Items for Dropdown:
-${itemList}`);
+${itemList}`;
+            
+            resultDiv.innerHTML = createResultContent(content, 'success');
         } else {
-            setResultContent(resultDiv, `<span class="error">✗ Data Format Test Failed</span>\nStatus: ${response.status}`);
+            resultDiv.innerHTML = createResultContent(`✗ Data Format Test Failed\nStatus: ${response.status}`, 'error');
         }
     } catch (error) {
         const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-        setResultContent(resultDiv, `<span class="error">✗ Connection Error</span>\n${errorMsg}`);
+        resultDiv.innerHTML = createResultContent(`✗ Connection Error\n${errorMsg}`, 'error');
     }
 }
 
