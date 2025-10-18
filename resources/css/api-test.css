@@ -1,0 +1,38 @@
+/* API Test Page Styles */
+body {
+    font-family: Arial, sans-serif;
+    padding: 20px;
+}
+
+.test-result {
+    margin: 10px 0;
+    padding: 10px;
+    border: 1px solid #ccc;
+}
+
+.test-result.success {
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+}
+
+.test-result.error {
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}
+
+.test-result.pending {
+    background-color: #fff3cd;
+    border-color: #ffeaa7;
+}
+
+button {
+    margin: 5px;
+    padding: 10px 15px;
+}
+
+pre {
+    background: #f4f4f4;
+    padding: 10px;
+    max-height: 200px;
+    overflow: auto;
+}
