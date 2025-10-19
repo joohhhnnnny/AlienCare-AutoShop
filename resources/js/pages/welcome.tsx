@@ -26,7 +26,7 @@ export default function Welcome() {
                         <div className="flex items-center gap-10">
                             {/* Logo */}
                             <Link href="/" className="flex items-center">
-                                <img src="/images/ICON-LOGO.svg" alt="AlienCare Auto Shop Logo" className="h-10 w-auto" />
+                                <img src="/images/iconlogo.svg" alt="AlienCare Auto Shop Logo" className="h-10 w-auto" />
                             </Link>
                             {/* Center Navigation Links */}
                             <Link href="/" className="text-sm leading-normal text-[#EDEDEC] hover:text-[#D9AF01]">
