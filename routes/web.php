@@ -25,5 +25,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('api-test');
 });
 
+Route::get('/about', function () {
+    return inertia('aboutus');
+})->name('about');
+
+Route::get('/services', function () {
+    return inertia('services');
+})->name('services');
+
+Route::get('/faqs', function () {
+    return inertia('faqs');
+})->name('faqs');
+
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
