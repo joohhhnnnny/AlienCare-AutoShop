@@ -19,7 +19,7 @@
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
 
         @viteReactRefresh
-        @vite(['resources/css/app.css', 'resources/css/theme.css', 'resources/js/theme.ts', 'resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])
+        @vite(['resources/css/app.css', 'resources/js/app.tsx'])
         @inertiaHead
     </head>
     <body class="font-sans antialiased">
