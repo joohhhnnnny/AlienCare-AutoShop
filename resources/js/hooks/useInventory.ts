@@ -40,7 +40,7 @@ export function useInventoryItems(initialFilters: InventoryFilters = {}) {
 
     const addStock = useCallback(async (operation: StockOperation) => {
         try {
-            const response = await inventoryService.addStock(operation);
+            await inventoryService.addStock(operation);
             await fetchInventory(); // Refresh data
 
             // Dispatch event for real-time updates
@@ -58,7 +58,7 @@ export function useInventoryItems(initialFilters: InventoryFilters = {}) {
 
     const deductStock = useCallback(async (operation: StockOperation) => {
         try {
-            const response = await inventoryService.deductStock(operation);
+            await inventoryService.deductStock(operation);
             await fetchInventory(); // Refresh data
 
             // Dispatch event for real-time updates

@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs";
 import { Badge } from "./components/ui/badge";
 import { LayoutDashboard, Package, AlertTriangle, BookOpen, FileText, Shield } from "lucide-react";

@@ -4,7 +4,6 @@ import { useInventoryItems } from "../../hooks/useInventory";
 import { useReservations } from "../../hooks/useReservations";
 import { Reservation } from "../../types/inventory";
 import { Alert, AlertDescription } from "../ui/alert";
-import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
@@ -26,7 +25,6 @@ export function ReservationPanel() {
     rejectReservation,
     completeReservation,
     cancelReservation,
-    updateFilters,
     refresh: refreshReservations
   } = useReservations({ per_page: 50 }); // Request more items to ensure we see pending reservations
 
@@ -54,7 +52,7 @@ export function ReservationPanel() {
   });
 
   // Extract data from responses with proper type checking
-  const reservations: any[] = Array.isArray(reservationsData?.data) ? reservationsData.data : [];
+  const reservations: Reservation[] = Array.isArray(reservationsData?.data) ? reservationsData.data : [];
   console.log('Current reservations data:', reservations.length, 'total reservations');
   console.log('Raw reservationsData:', reservationsData);
   console.log('Reservation statuses:', reservations.map(r => r.status));
@@ -76,23 +74,6 @@ export function ReservationPanel() {
         return <XCircle className="h-4 w-4 text-red-500" />;
       default:
         return <Clock className="h-4 w-4" />;
-    }
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return <Badge className="bg-yellow-500 text-white">Pending</Badge>;
-      case 'approved':
-        return <Badge className="bg-blue-500 text-white">Approved</Badge>;
-      case 'completed':
-        return <Badge className="bg-green-500 text-white">Completed</Badge>;
-      case 'cancelled':
-        return <Badge variant="destructive">Cancelled</Badge>;
-      case 'rejected':
-        return <Badge variant="destructive">Rejected</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
     }
   };
 
@@ -180,7 +161,7 @@ export function ReservationPanel() {
 
   // Auto-expand pending reservations if they exist
   const checkAndExpandPendingReservations = () => {
-    const pendingReservations = reservations.filter((r: any) => r.status === 'pending');
+    const pendingReservations = reservations.filter((r) => r.status === 'pending');
     console.log('Checking pending reservations:', pendingReservations.length, 'found');
     if (pendingReservations.length > 0 && collapsedGroups.pending) {
       console.log('Auto-expanding pending reservations section');

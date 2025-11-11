@@ -21,6 +21,9 @@ export function StockAlerts() {
   // Ensure alerts is always an array and add debugging
   const alerts = Array.isArray(rawAlerts) ? rawAlerts : [];
 
+  const [bulkSelected, setBulkSelected] = useState<number[]>([]);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+
   // Debug logging
   console.log('StockAlerts render - rawAlerts:', rawAlerts, 'alerts:', alerts, 'type:', typeof alerts, 'isArray:', Array.isArray(alerts));
 
@@ -37,15 +40,12 @@ export function StockAlerts() {
     );
   }
 
-  const [bulkSelected, setBulkSelected] = useState<number[]>([]);
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
-
   const handleAcknowledgeAlert = async (alertId: number) => {
     try {
       setActionLoading(`acknowledge-${alertId}`);
       await acknowledgeAlert(alertId);
       alert('Alert acknowledged successfully');
-    } catch (error) {
+    } catch {
       alert('Failed to acknowledge alert');
     } finally {
       setActionLoading(null);
@@ -63,7 +63,7 @@ export function StockAlerts() {
       await bulkAcknowledgeAlerts(bulkSelected);
       alert(`Successfully acknowledged ${bulkSelected.length} alerts`);
       setBulkSelected([]);
-    } catch (error) {
+    } catch {
       alert('Failed to acknowledge selected alerts');
     } finally {
       setActionLoading(null);
@@ -75,7 +75,7 @@ export function StockAlerts() {
       setActionLoading('generate');
       const result = await generateLowStockAlerts();
       alert(`Generated ${result.alerts_created} new alerts for ${result.total_low_stock_items} low stock items`);
-    } catch (error) {
+    } catch {
       alert('Failed to generate alerts');
     } finally {
       setActionLoading(null);
@@ -87,7 +87,7 @@ export function StockAlerts() {
       setActionLoading('cleanup');
       const result = await cleanupAlerts(30);
       alert(`Cleaned up ${result.deleted_count} old acknowledged alerts`);
-    } catch (error) {
+    } catch {
       alert('Failed to cleanup alerts');
     } finally {
       setActionLoading(null);

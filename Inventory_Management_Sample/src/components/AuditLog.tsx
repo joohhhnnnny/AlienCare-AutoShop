@@ -43,7 +43,7 @@ export function AuditLog() {
     }
   };
 
-  const getQuantityDisplay = (transaction: any) => {
+  const getQuantityDisplay = (transaction: { quantity: number }) => {
     const sign = transaction.quantity > 0 ? '+' : '';
     const color = transaction.quantity > 0 ? 'text-green-600' : 'text-red-600';
     return <span className={color}>{sign}{transaction.quantity}</span>;
@@ -55,7 +55,6 @@ export function AuditLog() {
 
   const totalTransactions = filteredTransactions.length;
   const uniqueUsers = new Set(filteredTransactions.map(t => t.performedBy)).size;
-  const latestTransaction = filteredTransactions[0]?.timestamp || new Date();
 
   return (
     <div className="space-y-6">
