@@ -73,10 +73,10 @@ export function ReservationPanel() {
     setIsDialogOpen(false);
   };
 
-  const updateReservationStatus = (reservationId: string, newStatus: string) => {
+  const updateReservationStatus = (reservationId: string, newStatus: Reservation['status']) => {
     setReservations(prev => prev.map(reservation =>
       reservation.id === reservationId
-        ? { ...reservation, status: newStatus as any, updatedAt: new Date() }
+        ? { ...reservation, status: newStatus, updatedAt: new Date() }
         : reservation
     ));
   };
@@ -111,7 +111,7 @@ export function ReservationPanel() {
             <div className="space-y-4">
               <div>
                 <Label htmlFor="part">Part</Label>
-                <Select value={newReservation.partId} onValueChange={(value) =>
+                <Select value={newReservation.partId} onValueChange={(value: string) =>
                   setNewReservation(prev => ({ ...prev, partId: value }))
                 }>
                   <SelectTrigger>
