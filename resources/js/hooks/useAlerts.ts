@@ -243,7 +243,7 @@ export const useAlerts = (initialFilters: AlertFilters = {}): UseAlertsReturn =>
   useEffect(() => {
     fetchAlerts();
     fetchStatistics();
-  }, []);
+  }, [fetchAlerts, fetchStatistics]);
 
   return {
     ...state,

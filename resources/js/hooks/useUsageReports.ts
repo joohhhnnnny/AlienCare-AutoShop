@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { reportsService } from '../services/reportsService';
 import { inventoryEvents } from '../utils/inventoryEvents';
 
@@ -52,7 +52,7 @@ export function useUsageReports({ reportPeriod = 'daily', selectedCategory = 'al
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchUsageData = async () => {
+  const fetchUsageData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -89,11 +89,11 @@ export function useUsageReports({ reportPeriod = 'daily', selectedCategory = 'al
     } finally {
       setLoading(false);
     }
-  };
+  }, [reportPeriod]);
 
   useEffect(() => {
     fetchUsageData();
-  }, [reportPeriod]);
+  }, [fetchUsageData]);
 
   // Listen for inventory events to auto-refresh data
   useEffect(() => {
@@ -108,7 +108,7 @@ export function useUsageReports({ reportPeriod = 'daily', selectedCategory = 'al
     );
 
     return cleanup;
-  }, [reportPeriod]);
+  }, [fetchUsageData]);
 
   // Also add an interval for periodic refresh (every 30 seconds)
   useEffect(() => {
@@ -117,7 +117,7 @@ export function useUsageReports({ reportPeriod = 'daily', selectedCategory = 'al
     }, 30000); // 30 seconds
 
     return () => clearInterval(interval);
-  }, [reportPeriod]);
+  }, [fetchUsageData]);
 
   // Filter data by category if needed
   const filteredData = data ? {

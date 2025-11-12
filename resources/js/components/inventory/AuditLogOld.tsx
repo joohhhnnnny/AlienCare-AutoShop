@@ -39,6 +39,7 @@ export function AuditLog() {
 
   // Get available filter options from real data
   const transactionTypes = [...new Set(transactions.map(t => t.type))];
+  const users = [...new Set(transactions.map(t => t.performed_by).filter((user): user is string => Boolean(user)))];
   const getTransactionBadge = (type: string) => {
     switch (type) {
       case 'CONSUME':
@@ -58,7 +59,7 @@ export function AuditLog() {
     }
   };
 
-  const getQuantityDisplay = (transaction: any) => {
+  const getQuantityDisplay = (transaction: { quantity: number }) => {
     const sign = transaction.quantity > 0 ? '+' : '';
     const color = transaction.quantity > 0 ? 'text-emerald-600' : 'text-red-600';
     return <span className={color}>{sign}{transaction.quantity}</span>;

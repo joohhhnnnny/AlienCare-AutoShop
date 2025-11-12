@@ -1,5 +1,5 @@
 import { AlertTriangle, CheckCircle, ChevronDown, ChevronRight, Clock, Loader2, Package, Plus, RefreshCw, Trash2, XCircle } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useInventoryItems } from "../../hooks/useInventory";
 import { useReservations } from "../../hooks/useReservations";
 import { Reservation } from "../../types/inventory";
@@ -52,7 +52,10 @@ export function ReservationPanel() {
   });
 
   // Extract data from responses with proper type checking
-  const reservations: Reservation[] = Array.isArray(reservationsData?.data) ? reservationsData.data : [];
+  const reservations: Reservation[] = useMemo(() => 
+    Array.isArray(reservationsData?.data) ? reservationsData.data : [], 
+    [reservationsData?.data]
+  );
   console.log('Current reservations data:', reservations.length, 'total reservations');
   console.log('Raw reservationsData:', reservationsData);
   console.log('Reservation statuses:', reservations.map(r => r.status));
@@ -160,7 +163,7 @@ export function ReservationPanel() {
   };
 
   // Auto-expand pending reservations if they exist
-  const checkAndExpandPendingReservations = () => {
+  const checkAndExpandPendingReservations = useCallback(() => {
     const pendingReservations = reservations.filter((r) => r.status === 'pending');
     console.log('Checking pending reservations:', pendingReservations.length, 'found');
     if (pendingReservations.length > 0 && collapsedGroups.pending) {
@@ -170,12 +173,12 @@ export function ReservationPanel() {
         pending: false // Ensure pending is always visible when they exist
       }));
     }
-  };
+  }, [reservations, collapsedGroups.pending]);
 
   // Check for pending reservations when data changes
   useEffect(() => {
     checkAndExpandPendingReservations();
-  }, [reservations]);
+  }, [checkAndExpandPendingReservations]);
 
   // Get group statistics
   const getGroupStats = (reservations: Reservation[]) => {

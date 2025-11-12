@@ -5,13 +5,6 @@
 
 const API_BASE = window.location.origin + '/api';
 
-interface TestResult {
-    name: string;
-    status: 'success' | 'error' | 'pending';
-    message: string;
-    details?: unknown;
-}
-
 async function testEndpoint(
     name: string,
     url: string,

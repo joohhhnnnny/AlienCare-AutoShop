@@ -68,7 +68,7 @@ export function AuditLog() {
     }
   };
 
-  const getQuantityDisplay = (transaction: any) => {
+  const getQuantityDisplay = (transaction: { quantity: number }) => {
     const sign = transaction.quantity > 0 ? '+' : '';
     const color = transaction.quantity > 0 ? 'text-emerald-600' : 'text-red-600';
     return <span className={color}>{sign}{transaction.quantity}</span>;

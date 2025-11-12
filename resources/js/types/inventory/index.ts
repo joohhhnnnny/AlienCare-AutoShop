@@ -85,7 +85,7 @@ export interface Report {
   id: number;
   report_type: 'daily_usage' | 'monthly_procurement' | 'reconciliation' | 'low_stock' | 'reservation_summary';
   report_date: string;
-  data: any; // JSON data specific to report type
+  data: Record<string, unknown>; // JSON data specific to report type
   created_at: string;
   updated_at: string;
 }
@@ -121,8 +121,8 @@ export interface AuditLog {
   entity_type: 'inventory' | 'reservation' | 'transaction';
   entity_id: string | number;
   action: 'create' | 'update' | 'delete' | 'reserve' | 'approve' | 'reject' | 'complete' | 'cancel' | 'consume' | 'restock' | 'adjust';
-  old_data?: any;
-  new_data?: any;
+  old_data?: Record<string, unknown>;
+  new_data?: Record<string, unknown>;
   user_id?: string;
   reference_number?: string;
   notes?: string;
