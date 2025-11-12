@@ -1,9 +1,22 @@
 import { useDashboardAnalytics, useLowStockAlerts } from "@/hooks/useInventory";
 import { useReservationsSummary } from "@/hooks/useReservations";
-import { AlertTriangle, Clock, Loader2, Package, TrendingDown } from "lucide-react";
+import type { InventoryItem, StockTransaction } from "@/types/inventory";
+import {
+  AlertTriangle,
+  Clock,
+  Loader2,
+  Package,
+  TrendingDown,
+} from "lucide-react";
 import { Alert, AlertDescription } from "../ui/alert";
 import { Badge } from "../ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+
+interface TopCategory {
+  category: string;
+  count: number;
+  value: number;
+}
 
 // Custom Peso Icon Component
 const PesoIcon = ({ className }: { className?: string }) => (
@@ -25,9 +38,13 @@ const PesoIcon = ({ className }: { className?: string }) => (
 );
 
 export function Dashboard() {
-  const { data: analytics, loading: analyticsLoading, error: analyticsError } = useDashboardAnalytics();
+  const {
+    data: analytics,
+    loading: analyticsLoading,
+    error: analyticsError,
+  } = useDashboardAnalytics();
   const { data: lowStockAlerts, loading: alertsLoading } = useLowStockAlerts();
-  const { data: reservationsSummary, loading: reservationsLoading } = useReservationsSummary();
+  const { loading: reservationsLoading } = useReservationsSummary();
 
   if (analyticsError) {
     return (
@@ -45,7 +62,9 @@ export function Dashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Inventory Dashboard</h1>
+        <h1 className="text-2xl font-bold text-foreground">
+          Inventory Dashboard
+        </h1>
         <p className="text-muted-foreground">
           Real-time overview of Alien Care Autoshop inventory status
         </p>
@@ -61,11 +80,15 @@ export function Dashboard() {
             {isLoading ? (
               <div className="flex items-center space-x-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                <span className="text-sm text-muted-foreground">Loading...</span>
+                <span className="text-sm text-muted-foreground">
+                  Loading...
+                </span>
               </div>
             ) : (
               <>
-                <div className="text-2xl font-bold text-foreground">{analytics?.total_items || 0}</div>
+                <div className="text-2xl font-bold text-foreground">
+                  {analytics?.total_items || 0}
+                </div>
                 <p className="text-xs text-muted-foreground">
                   Active inventory items
                 </p>
@@ -83,11 +106,15 @@ export function Dashboard() {
             {isLoading ? (
               <div className="flex items-center space-x-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                <span className="text-sm text-muted-foreground">Loading...</span>
+                <span className="text-sm text-muted-foreground">
+                  Loading...
+                </span>
               </div>
             ) : (
               <>
-                <div className="text-2xl font-bold text-destructive">{analytics?.low_stock_count || 0}</div>
+                <div className="text-2xl font-bold text-destructive">
+                  {analytics?.low_stock_count || 0}
+                </div>
                 <p className="text-xs text-muted-foreground">
                   Below minimum threshold
                 </p>
@@ -105,12 +132,17 @@ export function Dashboard() {
             {isLoading ? (
               <div className="flex items-center space-x-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                <span className="text-sm text-muted-foreground">Loading...</span>
+                <span className="text-sm text-muted-foreground">
+                  Loading...
+                </span>
               </div>
             ) : (
               <>
                 <div className="text-2xl font-bold text-green-600">
-                  ₱{analytics?.total_value?.toLocaleString('en-US', { minimumFractionDigits: 2 }) || '0.00'}
+                  ₱
+                  {analytics?.total_value?.toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                  }) || "0.00"}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Current inventory value
@@ -129,11 +161,15 @@ export function Dashboard() {
             {isLoading ? (
               <div className="flex items-center space-x-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                <span className="text-sm text-muted-foreground">Loading...</span>
+                <span className="text-sm text-muted-foreground">
+                  Loading...
+                </span>
               </div>
             ) : (
               <>
-                <div className="text-2xl font-bold text-blue-600">{analytics?.active_reservations || 0}</div>
+                <div className="text-2xl font-bold text-blue-600">
+                  {analytics?.active_reservations || 0}
+                </div>
                 <p className="text-xs text-muted-foreground">
                   Pending approval and processing
                 </p>
@@ -152,16 +188,25 @@ export function Dashboard() {
             {isLoading ? (
               <div className="flex items-center space-x-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                <span className="text-sm text-muted-foreground">Loading alerts...</span>
+                <span className="text-sm text-muted-foreground">
+                  Loading alerts...
+                </span>
               </div>
             ) : lowStockAlerts && lowStockAlerts.length > 0 ? (
-              lowStockAlerts.slice(0, 5).map((item: any) => (
-                <div key={item.id} className="flex items-center justify-between p-3 border border-border rounded-lg bg-destructive/5">
+              lowStockAlerts.slice(0, 5).map((item: InventoryItem) => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between p-3 border border-border rounded-lg bg-destructive/5"
+                >
                   <div className="flex items-center space-x-3">
                     <AlertTriangle className="h-5 w-5 text-destructive" />
                     <div>
-                      <p className="font-medium text-foreground">{item.item_id}</p>
-                      <p className="text-sm text-muted-foreground">{item.item_name}</p>
+                      <p className="font-medium text-foreground">
+                        {item.item_id}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {item.item_name}
+                      </p>
                     </div>
                   </div>
                   <div className="text-right">
@@ -173,42 +218,67 @@ export function Dashboard() {
                 </div>
               ))
             ) : (
-              <p className="text-sm text-muted-foreground">No low stock alerts</p>
+              <p className="text-sm text-muted-foreground">
+                No low stock alerts
+              </p>
             )}
           </CardContent>
         </Card>
 
         <Card className="bg-card border-border">
           <CardHeader>
-            <CardTitle className="text-foreground">Recent Transactions</CardTitle>
+            <CardTitle className="text-foreground">
+              Recent Transactions
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {isLoading ? (
               <div className="flex items-center space-x-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                <span className="text-sm text-muted-foreground">Loading transactions...</span>
+                <span className="text-sm text-muted-foreground">
+                  Loading transactions...
+                </span>
               </div>
-            ) : analytics?.recent_transactions && analytics.recent_transactions.length > 0 ? (
-              analytics.recent_transactions.slice(0, 5).map((transaction: any, index: number) => (
-                <div key={transaction.id || `transaction-${index}-${transaction.item_id}`} className="flex items-center justify-between text-sm">
-                  <div className="flex items-center space-x-2">
-                    <Badge variant={transaction.transaction_type === 'sale' ? 'destructive' : 'secondary'}>
-                      {transaction.transaction_type.toUpperCase()}
-                    </Badge>
-                    <span className="text-foreground">{transaction.inventory_item?.item_id || 'Unknown'}</span>
+            ) : analytics?.recent_transactions &&
+              analytics.recent_transactions.length > 0 ? (
+              analytics.recent_transactions
+                .slice(0, 5)
+                .map((transaction: StockTransaction, index: number) => (
+                  <div
+                    key={
+                      transaction.id ||
+                      `transaction-${index}-${transaction.item_id}`
+                    }
+                    className="flex items-center justify-between text-sm"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <Badge
+                        variant={
+                          transaction.transaction_type === "sale"
+                            ? "destructive"
+                            : "secondary"
+                        }
+                      >
+                        {transaction.transaction_type.toUpperCase()}
+                      </Badge>
+                      <span className="text-foreground">
+                        {transaction.inventory_item?.item_id || "Unknown"}
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-muted-foreground">
+                        {transaction.quantity} units
+                      </span>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(transaction.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <span className="text-muted-foreground">
-                      {transaction.quantity} units
-                    </span>
-                    <p className="text-xs text-muted-foreground">
-                      {new Date(transaction.created_at).toLocaleDateString()}
-                    </p>
-                  </div>
-                </div>
-              ))
+                ))
             ) : (
-              <p className="text-sm text-muted-foreground">No recent transactions</p>
+              <p className="text-sm text-muted-foreground">
+                No recent transactions
+              </p>
             )}
           </CardContent>
         </Card>
@@ -217,35 +287,52 @@ export function Dashboard() {
       {/* Top Categories */}
       <Card className="bg-card border-border">
         <CardHeader>
-          <CardTitle className="text-foreground">Top Categories by Value</CardTitle>
+          <CardTitle className="text-foreground">
+            Top Categories by Value
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
             <div className="flex items-center space-x-2">
               <Loader2 className="h-4 w-4 animate-spin" />
-              <span className="text-sm text-muted-foreground">Loading categories...</span>
+              <span className="text-sm text-muted-foreground">
+                Loading categories...
+              </span>
             </div>
-          ) : analytics?.top_categories && analytics.top_categories.length > 0 ? (
+          ) : analytics?.top_categories &&
+            analytics.top_categories.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {analytics.top_categories.map((category: any, index: number) => (
-                <div key={category.category} className="p-4 border border-border rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-medium text-foreground">{category.category}</h3>
-                    <Badge variant="outline">#{index + 1}</Badge>
+              {analytics.top_categories.map(
+                (category: TopCategory, index: number) => (
+                  <div
+                    key={category.category}
+                    className="p-4 border border-border rounded-lg"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-medium text-foreground">
+                        {category.category}
+                      </h3>
+                      <Badge variant="outline">#{index + 1}</Badge>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm text-muted-foreground">
+                        {category.count} items
+                      </p>
+                      <p className="text-lg font-bold text-primary">
+                        ₱
+                        {category.value?.toLocaleString("en-US", {
+                          minimumFractionDigits: 2,
+                        }) || "0.00"}
+                      </p>
+                    </div>
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-sm text-muted-foreground">
-                      {category.count} items
-                    </p>
-                    <p className="text-lg font-bold text-primary">
-                      ₱{category.value?.toLocaleString('en-US', { minimumFractionDigits: 2 }) || '0.00'}
-                    </p>
-                  </div>
-                </div>
-              ))}
+                ),
+              )}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">No category data available</p>
+            <p className="text-sm text-muted-foreground">
+              No category data available
+            </p>
           )}
         </CardContent>
       </Card>

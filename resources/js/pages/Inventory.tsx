@@ -24,7 +24,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function Inventory() {
-    const { alerts, loading } = useAlerts();
+    const { alerts } = useAlerts();
 
     // Ensure alerts is always an array and calculate unacknowledged count
     const safeAlerts = Array.isArray(alerts) ? alerts : [];

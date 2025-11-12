@@ -5,21 +5,19 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useInventoryItems } from "@/hooks/useInventory";
 import { dispatchInventoryUpdate, dispatchReservationUpdate, dispatchStockTransaction } from "@/utils/inventoryEvents";
 import { Clock, Package, RefreshCw, ShoppingCart, Truck } from "lucide-react";
 import { useState } from "react";
 
 export function AuditLogDemo() {
   const [isSimulating, setIsSimulating] = useState(false);
-  const { data: inventoryData } = useInventoryItems({ per_page: 5 });
 
   const simulateStockTransaction = () => {
     setIsSimulating(true);
 
     // Simulate a stock addition
     setTimeout(() => {
-      dispatchStockTransaction('ITEM001', 'procurement', 50, {
+      dispatchStockTransaction(1, 'procurement', 50, {
         reference_number: `PO-${Date.now()}`,
         notes: 'Demo procurement transaction'
       });
@@ -27,7 +25,7 @@ export function AuditLogDemo() {
 
     // Simulate a stock consumption
     setTimeout(() => {
-      dispatchStockTransaction('ITEM001', 'sale', -10, {
+      dispatchStockTransaction(1, 'sale', -10, {
         reference_number: `JO-${Date.now()}`,
         notes: 'Demo consumption transaction'
       });
@@ -35,7 +33,7 @@ export function AuditLogDemo() {
 
     // Simulate inventory update
     setTimeout(() => {
-      dispatchInventoryUpdate('ITEM001', 'updated', {
+      dispatchInventoryUpdate(1, 'updated', {
         field: 'reorder_level',
         old_value: 10,
         new_value: 15
@@ -53,7 +51,7 @@ export function AuditLogDemo() {
     // Create reservation
     setTimeout(() => {
       dispatchReservationUpdate('new', 'created', {
-        item_id: 'ITEM002',
+        item_id: 2,
         quantity: 5,
         job_order_number: `JO-${Date.now()}`
       });
@@ -84,11 +82,11 @@ export function AuditLogDemo() {
     setIsSimulating(true);
 
     const operations = [
-      () => dispatchStockTransaction('ITEM003', 'procurement', 100, { notes: 'Bulk restock' }),
-      () => dispatchStockTransaction('ITEM004', 'adjustment', -5, { notes: 'Inventory correction' }),
-      () => dispatchInventoryUpdate('ITEM005', 'created', { item_name: 'New Demo Item' }),
-      () => dispatchReservationUpdate('new', 'created', { item_id: 'ITEM003', quantity: 25 }),
-      () => dispatchStockTransaction('ITEM003', 'return', 3, { notes: 'Customer return' })
+      () => dispatchStockTransaction(3, 'procurement', 100, { notes: 'Bulk restock' }),
+      () => dispatchStockTransaction(4, 'adjustment', -5, { notes: 'Inventory correction' }),
+      () => dispatchInventoryUpdate(5, 'created', { item_name: 'New Demo Item' }),
+      () => dispatchReservationUpdate('new', 'created', { item_id: 3, quantity: 25 }),
+      () => dispatchStockTransaction(3, 'return', 3, { notes: 'Customer return' })
     ];
 
     operations.forEach((operation, index) => {

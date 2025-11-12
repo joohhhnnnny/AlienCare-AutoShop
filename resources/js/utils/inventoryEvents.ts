@@ -12,13 +12,13 @@ type InventoryEventType =
 
 interface InventoryEventData {
   type: InventoryEventType;
-  data?: any;
+  data?: unknown;
   timestamp: Date;
 }
 
 class InventoryEventDispatcher {
   // Dispatch an inventory event
-  dispatch(type: InventoryEventType, data?: any) {
+  dispatch(type: InventoryEventType, data?: unknown) {
     const event = new CustomEvent(type, {
       detail: {
         type,
@@ -34,7 +34,7 @@ class InventoryEventDispatcher {
       const auditEvent = new CustomEvent('audit-log-updated', {
         detail: {
           type: 'audit-log-updated',
-          data: { source: type, ...data },
+          data: { source: type, ...(data as Record<string, unknown> || {}) },
           timestamp: new Date()
         }
       });
@@ -74,14 +74,14 @@ class InventoryEventDispatcher {
 export const inventoryEvents = new InventoryEventDispatcher();
 
 // Convenience functions for common events
-export const dispatchInventoryUpdate = (itemId: number, operation: string, data?: any) => {
-  inventoryEvents.dispatch('inventory-updated', { itemId, operation, ...data });
+export const dispatchInventoryUpdate = (itemId: number, operation: string, data?: unknown) => {
+  inventoryEvents.dispatch('inventory-updated', { itemId, operation, ...(data as Record<string, unknown> || {}) });
 };
 
-export const dispatchReservationUpdate = (reservationId: string, status: string, data?: any) => {
-  inventoryEvents.dispatch('reservation-updated', { reservationId, status, ...data });
+export const dispatchReservationUpdate = (reservationId: string, status: string, data?: unknown) => {
+  inventoryEvents.dispatch('reservation-updated', { reservationId, status, ...(data as Record<string, unknown> || {}) });
 };
 
-export const dispatchStockTransaction = (itemId: number, transactionType: string, quantity: number, data?: any) => {
-  inventoryEvents.dispatch('stock-transaction', { itemId, transactionType, quantity, ...data });
+export const dispatchStockTransaction = (itemId: number, transactionType: string, quantity: number, data?: unknown) => {
+  inventoryEvents.dispatch('stock-transaction', { itemId, transactionType, quantity, ...(data as Record<string, unknown> || {}) });
 };

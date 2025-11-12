@@ -6,6 +6,16 @@
 import { api, ApiResponse, PaginatedResponse } from '@/lib/api';
 import { DashboardAnalytics, InventoryItem, StockTransaction } from '@/types/inventory';
 
+export interface ArchiveEntry {
+    id: number;
+    entity_type: string;
+    entity_id: string;
+    action: string;
+    user_id?: number;
+    created_at: string;
+    updated_at: string;
+}
+
 export interface InventoryFilters {
     search?: string;
     category?: string;
@@ -122,7 +132,7 @@ class InventoryService {
             }
         });
 
-        return api.get<ApiResponse<PaginatedResponse<StockTransaction>>>('/transactions', params);
+        return api.get<ApiResponse<PaginatedResponse<StockTransaction>>>('/inventory/transactions', params);
     }
 
     // Get archives/audit logs with filters
@@ -134,7 +144,7 @@ class InventoryService {
         end_date?: string;
         per_page?: number;
         page?: number;
-    } = {}): Promise<ApiResponse<PaginatedResponse<any>>> {
+    } = {}): Promise<ApiResponse<PaginatedResponse<ArchiveEntry>>> {
         const params: Record<string, string | number> = {};
 
         Object.entries(filters).forEach(([key, value]) => {
@@ -143,7 +153,7 @@ class InventoryService {
             }
         });
 
-        return api.get<ApiResponse<PaginatedResponse<any>>>('/archives', params);
+        return api.get<ApiResponse<PaginatedResponse<ArchiveEntry>>>('/archives', params);
     }
 }
 

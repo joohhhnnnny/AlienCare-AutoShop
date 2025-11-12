@@ -65,7 +65,12 @@ class ReportsService {
         total_items: number;
         total_value: number;
         low_stock_count: number;
-        recent_activity: any[];
+        recent_activity: Array<{
+            id: number;
+            type: string;
+            description: string;
+            created_at: string;
+        }>;
         top_categories: Array<{
             category: string;
             count: number;
@@ -81,7 +86,12 @@ class ReportsService {
             total_items: number;
             total_value: number;
             low_stock_count: number;
-            recent_activity: any[];
+            recent_activity: Array<{
+                id: number;
+                type: string;
+                description: string;
+                created_at: string;
+            }>;
             top_categories: Array<{
                 category: string;
                 count: number;

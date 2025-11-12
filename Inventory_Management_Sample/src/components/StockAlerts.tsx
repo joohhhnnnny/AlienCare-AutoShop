@@ -4,7 +4,6 @@ import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { AlertTriangle, CheckCircle, Clock, Package } from "lucide-react";
 import { mockAlerts, mockParts } from "../data/mockData";
-import { LowStockAlert } from "../types/inventory";
 
 export function StockAlerts() {
   const [alerts, setAlerts] = useState(mockAlerts);
